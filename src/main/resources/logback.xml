@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!--
+    How logging works:
+
+    1. Our code uses only slf4j.LoggerFactory/Logger to write logs.  We use just the slf4j *API*.  Other bindings
+       such as slf4j-simple or slf4j-log4j must NOT be in the classpath; if such bindings/jars are inherited as
+       transitive dependencies the logging setup describe here breaks.
+    2. The slf4j API delegates to a logback implementation/binding.
+    3. This file configures the logback appender.
+    4. The appender logs to STDOUT.
+    5. Cloud foundry collects and displays a fixed amount of STDOUT logs (cf logs application-name)
+    6. If the application is also bound to service syslog then STDOUT entries are also sent to kibana.
+
+    APPLICATION_NAME below comes from an environment variable.  We set it in cf-deploy.coffee
+
+    REFERENCE:
+    https://devtools.monsanto.net/docs/logs/cf-elk/
+    https://awskibana.velocity.ag/_plugin/kibana/
+    -->
+
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date{ISO8601,UTC}Z app=${APPLICATION_NAME} log_level=&quot;%level&quot; thread=&quot;%thread&quot; %logger{0} - %msg %ex %n%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="app" level="INFO" />
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
