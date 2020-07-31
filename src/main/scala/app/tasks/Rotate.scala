@@ -15,7 +15,7 @@ class Rotate(slackNotifier: SlackNotifier,
 
   private val Log: Logger = LoggerFactory.getLogger(this.getClass)
 
-  @Scheduled(fixedRate = 20 * 1000, initialDelay = 1000)
+  @Scheduled(fixedRate = 10 * 60 * 1000, initialDelay = 1000)
   def doRotation(): Unit = {
     txFunction {
 
