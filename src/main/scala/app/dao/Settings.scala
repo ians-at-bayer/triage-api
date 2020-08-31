@@ -1,3 +1,3 @@
 package app.dao
 
-case class Settings (slackHookUrl: String, orderPointer: Int)
+case class Settings (slackHookUrl: String, orderPointer: Int, slackMessage: String)

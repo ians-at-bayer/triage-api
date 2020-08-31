@@ -1,6 +1,6 @@
 package app.tasks
 
-import app.business.SlackNotifier
+import app.business.{MessageGenerator, SlackNotifier}
 import app.dao.{PeopleDao, Person, SettingsDao}
 import com.bayer.scala.transactions.TransactionalFunction
 import org.slf4j.{Logger, LoggerFactory}
@@ -11,7 +11,8 @@ import org.springframework.stereotype.Component
 class Rotate(slackNotifier: SlackNotifier,
              settingsDao: SettingsDao,
              peopleDao: PeopleDao,
-             txFunction: TransactionalFunction) {
+             txFunction: TransactionalFunction,
+             messageGenerator: MessageGenerator) {
 
   private val Log: Logger = LoggerFactory.getLogger(this.getClass)
 
@@ -21,7 +22,7 @@ class Rotate(slackNotifier: SlackNotifier,
 
       Log.info("Checking if I should rotate")
 
-      if (!peopleDao.hasPeople) {
+      if (!peopleDao.peopleExist) {
         Log.info("Done: not enough people to rotate")
         return
       }
@@ -38,11 +39,10 @@ class Rotate(slackNotifier: SlackNotifier,
       Log.info(s"Rotated pointer to $orderPointer")
 
       //get person, using order pointer
-      val person = peopleDao.getPersonByOrder(orderPointer).get
+      val person = peopleDao.loadPersonByOrder(orderPointer).get
+      val message = messageGenerator.generateMessage(person)
 
-      Log.info(s"Sending a Slack message to ${person.name}")
-
-      slackNotifier.sendMessage(s"<@${person.slackId}> (${person.name}) is currently on support")
+      slackNotifier.sendMessage(message)
 
       Log.info(s"Done")
 
