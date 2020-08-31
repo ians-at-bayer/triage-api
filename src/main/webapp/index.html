@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <title>Support Triage Rotations API</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Support Triage Rotations API">
+
+    <!-- Style -->
+    <link rel="stylesheet" href="style.css">
+
+    <script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
+
+    <script type="text/javascript" defer>
+        $.getJSON("api/v1/version").done(function (data) {
+            $("#version").html(data.version);
+            $("#build-date").html(data.buildTime);
+            $("#vcs-hash").html(data.buildHash);
+        });
+    </script>
+
+</head>
+
+<body>
+
+
+<div>
+    <div>
+        <h3>Support Triage Rotations API</h3>
+
+        <table class="table table-condensed">
+            <tr>
+                <th>Version</th>
+                <td id="version"></td>
+            </tr>
+            <tr>
+                <th>Build Date</th>
+                <td id="build-date"></td>
+            </tr>
+            <tr>
+                <th>VCS Version</th>
+                <td id="vcs-hash"></td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<br/>
+<br/>
+<a href="api/swagger-ui.html">API Documentation</a>
+
+</body>
+</html>

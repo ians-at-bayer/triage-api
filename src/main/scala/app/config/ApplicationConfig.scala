@@ -1,8 +1,10 @@
 package app.config
 
+import app.config.json.ObjectMapperFactory
 import com.bayer.scala.http.SimpleHttp
 import com.bayer.scala.jdbc.ScalaJdbcTemplate
 import com.bayer.scala.transactions.TransactionalFunction
+import com.fasterxml.jackson.databind.ObjectMapper
 import javax.sql.DataSource
 import org.apache.commons.dbcp2.BasicDataSource
 import org.apache.http.client.config.RequestConfig
@@ -18,6 +20,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement
 @ComponentScan(basePackages = Array("app"))
 @EnableScheduling
 class ApplicationConfig {
+
+  @Bean
+  def scalaObjectMapper: ObjectMapper = ObjectMapperFactory.instance
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //
