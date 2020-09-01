@@ -21,11 +21,5 @@ create table settings (
 	base_url                    varchar(9999)   not null
 );
 
-create table history (
-    name        varchar(999)        not null,
-    start_time  timestamp           not null,
-	end_time    timestamp           not null
-);
-
 
 

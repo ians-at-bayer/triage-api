@@ -1,15 +1,11 @@
 package app.web.v1.setup
 
 import app.dao.{PeopleDao, SettingsDao}
-import app.web.v1.ErrorMessageDTO
 import app.web.v1.people.PeopleBusiness
-import io.swagger.annotations.{Api, ApiOperation, ApiParam, ApiResponse, ApiResponses}
-import javax.servlet.http.HttpServletRequest
+import io.swagger.annotations._
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.bind.annotation.{CrossOrigin, RequestBody, RequestMapping, RequestMethod, ResponseStatus, RestController}
-
-import scala.util.Try
+import org.springframework.web.bind.annotation._
 
 @CrossOrigin
 @RestController
@@ -48,6 +44,9 @@ class SetupController(settingsDao: SettingsDao, peopleDao: PeopleDao, peopleBusi
 
     //update base url
     settingsDao.setBaseUrl(setup.appBaseUrl)
+
+    //reset the pointer to the first person in the list
+    settingsDao.setPointer(0)
 
     new ResponseEntity(HttpStatus.NO_CONTENT)
   }

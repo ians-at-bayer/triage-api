@@ -11,7 +11,7 @@ class SlackNotifier(httpClient: SimpleHttp, settingsDao: SettingsDao) {
     val slackHookUrl = settingsDao.settings.slackHookUrl
 
     httpClient.post(slackHookUrl,
-      s"""{"text": "*Support Triage Rotation Notification*\n$message"}""")
+      s"""{"text": "*On Call Support Person Change Notification*\n$message"}""")
       .map {
         case Response(200, _) => true
         case r => throw new IllegalStateException(s"unexpected response code=${r.code} and body='${r.body}'")
