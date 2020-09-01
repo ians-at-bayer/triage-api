@@ -1,5 +1,9 @@
 package app.dao
 
+import java.sql.Timestamp
+import java.time.Instant
+
+import app.ISODateTimeUtil
 import com.bayer.scala.jdbc.ScalaJdbcTemplate
 import org.springframework.stereotype.Repository
 
@@ -36,6 +40,18 @@ class SettingsDao(template: ScalaJdbcTemplate) {
     val sql = "update settings set slack_hook_url = ?"
 
     template.update(sql, url)
+  }
+
+  def setRotationFrequencyDays(days: Int): Unit = {
+    val sql = "update settings set rotation_frequency_days = ?"
+
+    template.update(sql, days)
+  }
+
+  def setNextRotation(instant: Instant): Unit = {
+    val sql = "update settings set next_rotation = ?"
+
+    template.update(sql, new Timestamp(instant.toEpochMilli))
   }
 
   private def rotateOrderPointer : Int = template.update(

@@ -18,7 +18,6 @@ class SlackConfigController(settingsDao: SettingsDao,
                             messageGenerator: MessageGenerator,
                             peopleDao: PeopleDao) {
 
-  //Set slack config
   @ApiOperation(
     value = "Update the slack configuration",
     produces = "application/json",
@@ -27,7 +26,7 @@ class SlackConfigController(settingsDao: SettingsDao,
     new ApiResponse(code = 200, message = "OK"),
     new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Bad Request"),
   ))
-  @RequestMapping(value = Array("/config"), method = Array(RequestMethod.POST))
+  @RequestMapping(value = Array("/slack-config"), method = Array(RequestMethod.POST))
   @Transactional
   def setConfig(httpRequest: HttpServletRequest,
                 @ApiParam(value = "slackConfig") @RequestBody slackConfig: SlackConfigDTO
@@ -49,7 +48,7 @@ class SlackConfigController(settingsDao: SettingsDao,
   @ApiResponses(value = Array(
     new ApiResponse(code = 200, message = "OK")
   ))
-  @RequestMapping(value = Array("/config"), method = Array(RequestMethod.GET), produces = Array("application/json; charset=utf-8"))
+  @RequestMapping(value = Array("/slack-config"), method = Array(RequestMethod.GET), produces = Array("application/json; charset=utf-8"))
   def viewConfig(): SlackConfigDTO  = {
     val settings = settingsDao.settings
 
@@ -63,7 +62,7 @@ class SlackConfigController(settingsDao: SettingsDao,
   @ApiResponses(value = Array(
     new ApiResponse(code = 200, message = "OK")
   ))
-  @RequestMapping(value = Array("/resend"), method = Array(RequestMethod.GET))
+  @RequestMapping(value = Array("/slack-resend"), method = Array(RequestMethod.GET))
   def resendSlackNotification(): ResponseEntity[Any] = {
     val personOnCall = peopleDao.loadPersonByOrder(settingsDao.settings.orderPointer)
 

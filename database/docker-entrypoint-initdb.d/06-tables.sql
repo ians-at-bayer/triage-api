@@ -5,7 +5,6 @@
 
 SET SEARCH_PATH TO triage_rotations_local;
 
---TODO: Need to ensure order is from 0 to n and consecutive
 create table people (
 	id              serial          not null primary key,
 	name            varchar(999)    not null,
@@ -18,7 +17,8 @@ create table settings (
 	order_pointer               int             not null,
 	next_rotation               timestamp       not null,
 	rotation_frequency_days     int             not null,
-	slack_message               varchar(9999)   not null
+	slack_message               varchar(9999)   not null,
+	base_url                    varchar(9999)   not null
 );
 
 create table history (

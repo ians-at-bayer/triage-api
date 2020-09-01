@@ -2,7 +2,7 @@ package app.config.json
 
 import java.time.Instant
 
-import app.config.ISODateTimeUtil
+import app.ISODateTimeUtil
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer}

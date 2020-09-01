@@ -1,4 +1,4 @@
-package app.config
+package app
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, LocalDate, ZoneId}

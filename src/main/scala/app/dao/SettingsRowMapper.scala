@@ -9,7 +9,10 @@ class SettingsRowMapper extends RowMapper[Settings] {
     Settings(
       rs.getString("slack_hook_url"),
       rs.getInt("order_pointer"),
-      rs.getString("slack_message")
+      rs.getString("slack_message"),
+      rs.getString("base_url"),
+      rs.getTimestamp("next_rotation").toInstant,
+      rs.getInt("rotation_frequency_days")
     )
   }
 }

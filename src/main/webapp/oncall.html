@@ -17,6 +17,13 @@
             $("#name").html(data.name);
             $("#slack-id").html(data.slackId);
         });
+
+        $.getJSON("api/v1/rotation-config").done(function (data) {
+            $("#rotation-length").html(data.rotationFrequencyDays + ' days');
+            $("#rotation-end").html(data.nextRotationTime + ' UTC');
+        });
+
+
     </script>
 
 </head>
@@ -36,6 +43,14 @@
             <tr>
                 <th>Slack ID</th>
                 <td id="slack-id"></td>
+            </tr>
+            <tr>
+                <th>Rotation Length</th>
+                <td id="rotation-length"></td>
+            </tr>
+            <tr>
+                <th>On Support Until</th>
+                <td id="rotation-end"></td>
             </tr>
         </table>
     </div>

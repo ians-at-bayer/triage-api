@@ -1,6 +1,6 @@
 package app.web.v1.people
 
-import app.dao.PeopleDao
+import app.dao.{PeopleDao, SettingsDao}
 import app.web.v1.ErrorMessageDTO
 import io.swagger.annotations.{Api, ApiOperation, ApiParam, ApiResponse, ApiResponses}
 import javax.servlet.http.HttpServletRequest
@@ -14,7 +14,43 @@ import scala.util.Try
 @RestController
 @RequestMapping(Array("/v1"))
 @Api(description = "manage rotations", tags = Array("rotations"))
-class RotationController(peopleDao: PeopleDao) {
+class RotationController(peopleDao: PeopleDao, settingsDao: SettingsDao) {
+
+  @ApiOperation(
+    value = "Update the rotation config",
+    produces = "application/json",
+    code = 200)
+  @ApiResponses(value = Array(
+    new ApiResponse(code = 200, message = "OK"),
+    new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Bad Request"),
+  ))
+  @RequestMapping(value = Array("/rotation-config"), method = Array(RequestMethod.POST))
+  @Transactional
+  def setConfig(@ApiParam(value = "config") @RequestBody config: RotationSettingsDTO
+               ): ResponseEntity[Any] = {
+
+    if (config.nextRotationTime.isDefined)
+      settingsDao.setNextRotation(config.nextRotationTime.get)
+
+    if (config.rotationFrequencyDays.isDefined)
+      settingsDao.setRotationFrequencyDays(config.rotationFrequencyDays.get)
+
+    new ResponseEntity(HttpStatus.OK)
+  }
+
+  @ApiOperation(
+    value = "See the rotation config",
+    produces = "application/json"
+  )
+  @ApiResponses(value = Array(
+    new ApiResponse(code = 200, message = "OK")
+  ))
+  @RequestMapping(value = Array("/rotation-config"), method = Array(RequestMethod.GET), produces = Array("application/json; charset=utf-8"))
+  def viewConfig(): RotationSettingsDTO  = {
+    val settings = settingsDao.settings
+
+    new RotationSettingsDTO(Some(settings.nextRotation), Some(settings.rotationFrequency))
+  }
 
   @ApiOperation(
     value = "Change the rotation order",
@@ -36,5 +72,7 @@ class RotationController(peopleDao: PeopleDao) {
 
     new ResponseEntity(HttpStatus.NO_CONTENT)
   }
+
+
 
 }

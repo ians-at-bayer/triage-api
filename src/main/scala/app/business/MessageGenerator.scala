@@ -8,9 +8,11 @@ class MessageGenerator(settingsDao: SettingsDao,
                        peopleDao: PeopleDao) {
 
   def generateMessage(personOnSupport: Person): String = {
-      settingsDao.settings.slackMessage
+    val settings = settingsDao.settings
+
+    settings.slackMessage
       .replaceAll("""\[slackid\]""", personOnSupport.slackId)
       .replaceAll("""\[name\]""", personOnSupport.name)
-      //.replaceAll("""\[oncallcardurl\]""", onCallCardUrl)
+      .replaceAll("""\[cardurl\]""", settings.baseUrl + "/oncall.html")
   }
 }
