@@ -1,4 +1,4 @@
-package app.web.v1.version
+package app.web.v1.misc
 
 import java.util.jar.{Attributes, Manifest}
 

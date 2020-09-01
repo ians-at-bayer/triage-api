@@ -29,15 +29,15 @@ class PeopleDao(template: ScalaJdbcTemplate) {
   def loadAllPeopleOrdered(): Seq[Person] = {
     val sql = "select * from people order by order_number asc"
 
-    template.queryForSeq[Person](sql, new PersonRowMapper)
+    template.query[Person](sql, new PersonRowMapper)
   }
 
   //
   // INSERT
   //
   def insertPerson(name: String, slackId: String): Unit = {
-    val sql = "insert into people (id, name, slack_id, order_number) " +
-      "values (DEFAULT, ?, ?, max(select order_number from people) + 1)"
+    val sql = "insert into people (name, slack_id, order_number) " +
+      "select ?, ?, max(order_number)+1 from people"
 
     template.update(sql, name, slackId)
   }
@@ -46,17 +46,17 @@ class PeopleDao(template: ScalaJdbcTemplate) {
   // UPDATE
   //
   def changeOrder(orderedPeopleIds: Seq[Int]) = {
-    val sql = "update people set order = ? where id = ?"
+    val sql = "update people set order_number = ? where id = ?"
 
     //make sure all people are distinct
     require(orderedPeopleIds.distinct.lengthCompare(orderedPeopleIds.length) == 0,
       "Ordered people IDs must be distinct")
 
     //make sure all people exist
-    require(loadAllPeopleOrdered.map(_.id).diff(orderedPeopleIds).isEmpty,
+    require(orderedPeopleIds.diff(loadAllPeopleOrdered.map(_.id)).isEmpty,
       "One or more people IDs do not exist")
 
-    (1 to orderedPeopleIds.length)
+    (0 to orderedPeopleIds.length-1)
       .zip(orderedPeopleIds)
       .foreach(item => template.update(sql, item._1, item._2))
   }

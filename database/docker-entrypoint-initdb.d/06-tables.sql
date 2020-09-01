@@ -10,7 +10,7 @@ create table people (
 	id              serial          not null primary key,
 	name            varchar(999)    not null,
 	slack_id        varchar(999)    not null,
-	order_number    int             not null check (order_number > 0)
+	order_number    int             not null check (order_number >= 0)
 );
 
 create table settings (

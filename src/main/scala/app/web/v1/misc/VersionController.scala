@@ -1,4 +1,4 @@
-package app.web.v1.version
+package app.web.v1.misc
 
 import io.swagger.annotations.{Api, ApiOperation}
 import org.slf4j.LoggerFactory
