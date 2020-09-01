@@ -26,7 +26,7 @@ class RotationController(peopleDao: PeopleDao, settingsDao: SettingsDao) {
   ))
   @RequestMapping(value = Array("/rotation-config"), method = Array(RequestMethod.POST))
   @Transactional
-  def setConfig(@ApiParam(value = "config") @RequestBody config: RotationSettingsDTO
+  def setConfig(@ApiParam(value = "config") @RequestBody config: RotationConfigDTO
                ): ResponseEntity[Any] = {
 
     if (config.nextRotationTime.isDefined)
@@ -46,10 +46,10 @@ class RotationController(peopleDao: PeopleDao, settingsDao: SettingsDao) {
     new ApiResponse(code = 200, message = "OK")
   ))
   @RequestMapping(value = Array("/rotation-config"), method = Array(RequestMethod.GET), produces = Array("application/json; charset=utf-8"))
-  def viewConfig(): RotationSettingsDTO  = {
+  def viewConfig(): RotationConfigDTO  = {
     val settings = settingsDao.settings
 
-    new RotationSettingsDTO(Some(settings.nextRotation), Some(settings.rotationFrequency))
+    new RotationConfigDTO(Some(settings.nextRotation), Some(settings.rotationFrequency))
   }
 
   @ApiOperation(

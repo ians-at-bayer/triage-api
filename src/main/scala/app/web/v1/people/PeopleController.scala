@@ -15,7 +15,7 @@ import scala.util.Try
 @RestController
 @RequestMapping(Array("/v1"))
 @Api(description = "manage people", tags = Array("people"))
-class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao) {
+class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao, peopleBusiness: PeopleBusiness) {
 
   private val LOG = LoggerFactory.getLogger(this.getClass)
 
@@ -45,21 +45,11 @@ class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao) {
   @ResponseStatus(value = HttpStatus.CREATED) // This annotation necessary to keep swagger from listing 200 as a possible response code.
   @RequestMapping(value = Array("/people"), method = Array(RequestMethod.POST), produces = Array("application/json; charset=utf-8"))
   @Transactional
-  def addPeople(httpRequest: HttpServletRequest,
-                @ApiParam(value = "peopleToAdd") @RequestBody request: Array[PersonDTO]
-               ): ResponseEntity[Any] = {
+  def addPeople(@ApiParam(value = "peopleToAdd") @RequestBody people: Array[PersonDTO]): ResponseEntity[Any] = {
 
-    if (!request.forall(_.id.isEmpty))
-      return new ResponseEntity(ErrorMessageDTO("Person ID cannot be set when adding a person"), HttpStatus.BAD_REQUEST)
-
-    if (!request.forall(_.rotationOrderNumber.isEmpty))
-      return new ResponseEntity(ErrorMessageDTO("Rotation order cannot be set when adding a person"), HttpStatus.BAD_REQUEST)
-
-    if (!request.forall(_.onSupport.isEmpty))
-      return new ResponseEntity(ErrorMessageDTO("On support flag cannot be set when adding a person"), HttpStatus.BAD_REQUEST)
-
-
-    request.foreach(person => peopleDao.insertPerson(person.name, person.slackId))
+    Try(peopleBusiness.createPeople(people)) recover {
+      case e: IllegalArgumentException => return new ResponseEntity(ErrorMessageDTO(e.getMessage), HttpStatus.BAD_REQUEST)
+    }
 
     new ResponseEntity(HttpStatus.CREATED)
   }

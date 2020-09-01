@@ -54,6 +54,12 @@ class SettingsDao(template: ScalaJdbcTemplate) {
     template.update(sql, new Timestamp(instant.toEpochMilli))
   }
 
+  def setBaseUrl(url: String): Unit = {
+    val sql = "update settings set base_url = ?"
+
+    template.update(sql, url)
+  }
+
   private def rotateOrderPointer : Int = template.update(
     "update settings set order_pointer = (select mod(order_pointer+1, max(order_number)+1) from people)")
 

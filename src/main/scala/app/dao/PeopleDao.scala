@@ -37,7 +37,7 @@ class PeopleDao(template: ScalaJdbcTemplate) {
   //
   def insertPerson(name: String, slackId: String): Unit = {
     val sql = "insert into people (name, slack_id, order_number) " +
-      "select ?, ?, max(order_number)+1 from people"
+      "select ?, ?, COALESCE(max(order_number)+1, 0) from people"
 
     template.update(sql, name, slackId)
   }
