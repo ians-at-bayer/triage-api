@@ -61,13 +61,13 @@ class RotationController(peopleDao: PeopleDao, settingsDao: SettingsDao) {
     new ApiResponse(code = 404, response = classOf[ErrorMessageDTO], message = "Not Found")
   ))
   @ResponseStatus(value = HttpStatus.NO_CONTENT) // This annotation necessary to keep swagger from listing 200 as a possible response code.
-  @RequestMapping(value = Array("/rotation-order"), method = Array(RequestMethod.PATCH), consumes = Array("application/json"))
+  @RequestMapping(value = Array("/rotation-order"), method = Array(RequestMethod.POST), consumes = Array("application/json"))
   @Transactional
   def reorderPeople(httpRequest: HttpServletRequest,
                    @ApiParam(value = "rotationOrderByPersonId") @RequestBody request: Array[Int]): ResponseEntity[Any]  = {
 
     Try (peopleDao.changeOrder(request)) recover {
-      case e: IllegalArgumentException => return new ResponseEntity(e.getMessage, HttpStatus.NOT_FOUND)
+      case e: IllegalArgumentException => return new ResponseEntity(ErrorMessageDTO(e.getMessage), HttpStatus.NOT_FOUND)
     }
 
     new ResponseEntity(HttpStatus.NO_CONTENT)

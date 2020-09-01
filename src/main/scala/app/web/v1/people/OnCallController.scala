@@ -28,16 +28,16 @@ class OnCallController(peopleDao: PeopleDao,
     new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Invalid format"),
     new ApiResponse(code = 404, response = classOf[ErrorMessageDTO], message = "Not Found")
   ))
-  @RequestMapping(value = Array("/on-call/{personId}"), method = Array(RequestMethod.PATCH))
+  @RequestMapping(value = Array("/on-call/{personId}"), method = Array(RequestMethod.PUT))
   @Transactional
   def setOnCallPerson(@PathVariable(name = "personId", required = true) personIdString: String): ResponseEntity[Any]  = {
 
     val personId = Try(personIdString.toInt) recover {
-      case e: NumberFormatException => return new ResponseEntity("Person ID format is invalid", HttpStatus.BAD_REQUEST)
+      case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Person ID format is invalid"), HttpStatus.BAD_REQUEST)
     }
 
     val person = peopleDao.loadPerson(personId.get)
-      .getOrElse(return new ResponseEntity(s"Person with ID $personId not found", HttpStatus.NOT_FOUND))
+      .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"Person not found"), HttpStatus.NOT_FOUND))
 
     settingsDao.setPointer(person.order)
 

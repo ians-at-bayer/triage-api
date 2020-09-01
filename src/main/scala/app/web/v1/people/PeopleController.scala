@@ -56,7 +56,7 @@ class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao) {
       return new ResponseEntity(ErrorMessageDTO("Rotation order cannot be set when adding a person"), HttpStatus.BAD_REQUEST)
 
     if (!request.forall(_.onSupport.isEmpty))
-      return new ResponseEntity(ErrorMessageDTO("On support cannot be set when adding a person"), HttpStatus.BAD_REQUEST)
+      return new ResponseEntity(ErrorMessageDTO("On support flag cannot be set when adding a person"), HttpStatus.BAD_REQUEST)
 
 
     request.foreach(person => peopleDao.insertPerson(person.name, person.slackId))
@@ -65,11 +65,12 @@ class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao) {
   }
 
   @ApiOperation(
-    value = "Delete multiple people",
+    value = "Delete one or more people",
     produces = "application/json"
   )
   @ApiResponses(value = Array(
     new ApiResponse(code = 204, message = "No Content"),
+    new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Bad Request"),
     new ApiResponse(code = 404, response = classOf[ErrorMessageDTO], message = "Not Found")
   ))
   @ResponseStatus(value = HttpStatus.NO_CONTENT) // This annotation necessary to keep swagger from listing 200 as a possible response code.
@@ -77,6 +78,11 @@ class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao) {
   @Transactional
   def deletePeople(httpRequest: HttpServletRequest,
                    @ApiParam(value = "peopleIdsToDelete") @RequestBody request: Array[Int]): ResponseEntity[Any]  = {
+
+    val onCallPersonId = peopleDao.loadPersonByOrder(settingsDao.settings.orderPointer).get.id
+
+    if (request.contains(onCallPersonId))
+      return new ResponseEntity(ErrorMessageDTO("Cannot delete the person who is currently on call"), HttpStatus.BAD_REQUEST)
 
     request.foreach(personId => {
       Try (peopleDao.removePerson(personId)) recover {
