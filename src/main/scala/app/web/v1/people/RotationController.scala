@@ -13,8 +13,8 @@ import scala.util.Try
 @CrossOrigin
 @RestController
 @RequestMapping(Array("/v1"))
-@Api(description = "manage the rotation order", tags = Array("rotation-order"))
-class RotationOrderController(peopleDao: PeopleDao) {
+@Api(description = "manage rotations", tags = Array("rotations"))
+class RotationController(peopleDao: PeopleDao) {
 
   @ApiOperation(
     value = "Change the rotation order",
