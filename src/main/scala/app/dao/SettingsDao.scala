@@ -3,7 +3,6 @@ package app.dao
 import java.sql.Timestamp
 import java.time.Instant
 
-import app.ISODateTimeUtil
 import com.bayer.scala.jdbc.ScalaJdbcTemplate
 import org.springframework.stereotype.Repository
 
