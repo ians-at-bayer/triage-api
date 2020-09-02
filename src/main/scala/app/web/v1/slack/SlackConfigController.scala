@@ -56,13 +56,13 @@ class SlackConfigController(settingsDao: SettingsDao,
   }
 
   @ApiOperation(
-    value = "Resend slack messages",
+    value = "Send or resend slack messages",
     produces = "application/json"
   )
   @ApiResponses(value = Array(
     new ApiResponse(code = 200, message = "OK")
   ))
-  @RequestMapping(value = Array("/slack-resend"), method = Array(RequestMethod.GET))
+  @RequestMapping(value = Array("/slack-send"), method = Array(RequestMethod.GET))
   def resendSlackNotification(): ResponseEntity[Any] = {
     val personOnCall = peopleDao.loadPersonByOrder(settingsDao.settings.orderPointer)
 

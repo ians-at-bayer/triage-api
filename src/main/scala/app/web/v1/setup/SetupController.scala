@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation._
 @RestController
 @RequestMapping(Array("/v1"))
 @Api(description = "setup the app for the first time ", tags = Array("setup"))
-class SetupController(settingsDao: SettingsDao, peopleDao: PeopleDao, peopleBusiness: PeopleBusiness) {
+class SetupController(settingsDao: SettingsDao,
+                      peopleDao: PeopleDao,
+                      peopleBusiness: PeopleBusiness) {
 
   @ApiOperation(
     value = "Submit the first time setup",
