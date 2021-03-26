@@ -16,8 +16,23 @@ Simple Scala web application for managing support triage rotations between team 
    see example file `user-deploy/DatabaseExample.json`
 1. Login to CF
 1. Go to dir `user-deploy`
-1. `> ./services.sh` Setup cloud foundry services
+1. `./services.sh` Setup cloud foundry services
 1. Go to project root dir
 1. Run `sbt clean package`
-1. `> cf-deploy --env=[np/p] --teamName=[your team name]` Run the deployment script
+1. `cf-deploy --env=[np/p] --teamName=[your team name]` Run the deployment script
 1. Setup Ocelot and/or Akana with route provided by CF
+
+
+### Future Development Plans
+* Support for multiple teams:
+   * New POST /create-team endpoint. Will create a team and put you on it.
+   * All endpoints besides POST /create-team will require you are on a team
+     to use them
+   * To join a team, just have an existing member call the POST /people
+     endpoint with your user id in the body
+* Frontend:
+   * Contact cards have a different security policy than Swagger endpoints
+   * Users can join a team on the web app
+   * Users can manage settings on the web app
+   * Users can find people on support by application name
+      * Users can get support person's contact info
