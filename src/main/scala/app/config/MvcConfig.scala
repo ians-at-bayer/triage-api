@@ -1,9 +1,9 @@
 package app.config
 
 import java.util
-
 import com.fasterxml.jackson.databind.ObjectMapper
-import javax.annotation.Resource
+import org.springframework.beans.factory.annotation.Autowired
+
 import org.springframework.context.annotation.{ComponentScan, Import}
 import org.springframework.http.converter.HttpMessageConverter
 import org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter
@@ -23,7 +23,7 @@ import springfox.documentation.swagger2.configuration.Swagger2DocumentationConfi
 @Import(Array(classOf[Swagger2DocumentationConfiguration], classOf[ApplicationConfig]))
 class MvcConfig extends WebMvcConfigurer {
 
-  @Resource
+  @Autowired
   private var scalaObjectMapper: ObjectMapper = _
 
   override def configureDefaultServletHandling(configurer: DefaultServletHandlerConfigurer): Unit = configurer.enable()

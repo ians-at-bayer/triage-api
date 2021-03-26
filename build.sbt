@@ -1,15 +1,14 @@
 import java.util.Date
 
 name := "support-triage-rotations-manager"
-
 version := "0.1"
-
 scalaVersion := "2.12.10"
 
 val springVersion = "5.2.7.RELEASE"
 val logbackVersion = "1.2.3"
 val servletApiVersion = "4.0.1"
 val jacksonVersion = "2.11.2"
+val springCloudPropsVersion = "1.4.1"
 
 enablePlugins(WarPlugin)
 enablePlugins(TomcatPlugin)
@@ -66,6 +65,9 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.dataformat" % "jackson-dataformat-csv" % jacksonVersion,
   "com.fasterxml.jackson.module" % "jackson-module-paranamer" % jacksonVersion,
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+
+  //Cloud Properties
+  "com.monsanto.mbl.properties" %% "cloud-properties" % springCloudPropsVersion,
 )
 
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")

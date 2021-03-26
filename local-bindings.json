@@ -1,0 +1,12 @@
+{
+  "user-provided": [
+    {
+      "credentials": {
+        "alias": "database",
+        "url": "jdbc:postgresql://localhost:15430/triage_rotations?currentSchema=triage_rotations_local&ssl=false",
+        "username": "triagerotationsuser",
+        "password": "triagerotationsuser"
+      }
+    }
+  ]
+}

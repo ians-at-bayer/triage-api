@@ -33,9 +33,9 @@ class ApplicationConfig {
   @Bean
   def dataSource: BasicDataSource = {
     val ds = new BasicDataSource
-    ds.setUrl("jdbc:postgresql://localhost:15430/triage_rotations?currentSchema=triage_rotations_local&ssl=false")
-    ds.setUsername("triagerotationsuser")
-    ds.setPassword("triagerotationsuser")
+    ds.setUrl(applicationProperties.databaseUrl)
+    ds.setUsername(applicationProperties.databaseUsername)
+    ds.setPassword(applicationProperties.databasePassword)
     ds.setDriverClassName("org.postgresql.Driver")
     ds.setDefaultAutoCommit(false)
     ds
@@ -70,5 +70,8 @@ class ApplicationConfig {
 
   @Bean
   def simpleHttp(httpClient: CloseableHttpClient): SimpleHttp = new SimpleHttp(httpClient)
+
+  @Bean
+  def applicationProperties = new AppProperties
 
 }
