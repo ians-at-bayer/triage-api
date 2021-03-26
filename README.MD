@@ -19,4 +19,5 @@ Simple Scala web application for managing support triage rotations between team 
 1. `> ./services.sh` Setup cloud foundry services
 1. Go to project root dir
 1. Run `sbt clean package`
-1. `> cf-deploy --env=[np/p]` Run the deployment script
+1. `> cf-deploy --env=[np/p] --teamName=[your team name]` Run the deployment script
+1. Setup Ocelot and/or Akana with route provided by CF

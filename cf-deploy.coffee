@@ -1,16 +1,19 @@
 # cf-deploy.coffee
 module.exports = (cfDeploy) ->
-  appName = "support-triage-rotations-manager"
-
   env = cfDeploy.args.env
+  teamName = cfDeploy.args.teamName
 
   {requiredParams} = cfDeploy.deployTools
   requiredParams(cfDeploy.args, 'env')
+  requiredParams(cfDeploy.args, 'teamName')
+
+  appName = "support-triage-rotations-manager-#{teamName}"
 
   appDomain = if env == "p" then "cf.local" else "mcf-np.local"
 
   console.log("************************** domain       = #{appDomain}")
   console.log("************************** api name     = #{appName}")
+  console.log("************************** team name    = #{teamName}")
 
   buildpack: 'java_buildpack'
   cfBaseName: "#{appName}"
