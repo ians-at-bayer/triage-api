@@ -23,7 +23,7 @@ class WebServletConfiguration extends WebApplicationInitializer {
     // dispatcher servlet
     //
     val servlet = ctx.addServlet("dispatcher", new DispatcherServlet(webCtx))
-    servlet.addMapping("/api/*")
+    servlet.addMapping("/*")
     servlet.setLoadOnStartup(1)
 
   }

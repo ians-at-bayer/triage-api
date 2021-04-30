@@ -17,7 +17,7 @@ class MessageGenerator(settingsDao: SettingsDao,
     val message = settings.slackMessage
       .replaceAll("""\[slackid\]""", personOnSupport.slackId)
       .replaceAll("""\[name\]""", personOnSupport.name)
-      .replaceAll("""\[cardurl\]""", appProperties.baseUrl + "/oncall.html")
+      .replaceAll("""\[cardurl\]""", appProperties.baseUrl + s"/oncall.html?teamId=${personOnSupport.teamId}")
 
     Log.info(s"Generated Support Message: ${message}")
 

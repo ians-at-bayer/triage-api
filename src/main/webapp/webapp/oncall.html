@@ -8,22 +8,25 @@
     <meta name="description" content="Support Triage - On Call Card">
 
     <!-- Style -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
 
     <script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
 
     <script type="text/javascript" defer>
-        $.getJSON("api/v1/on-call").done(function (data) {
-            $("#name").html(data.name);
-            $("#slack-id").html(data.slackId);
-        });
+        const urlParams = new URLSearchParams(window.location.search);
+        const teamId = urlParams.get('teamId')
 
-        $.getJSON("api/v1/rotation-config").done(function (data) {
-            $("#rotation-length").html(data.rotationFrequencyDays + ' days');
-            $("#rotation-end").html(data.nextRotationTime + ' UTC');
-        });
+        if (teamId != null) {
+            $.getJSON("on-call/" + teamId).done(function (data) {
+                $("#name").html(data.name);
+                $("#slack-id").html(data.slackId);
+            });
 
-
+            $.getJSON("rotation-config/" + teamId).done(function (data) {
+                $("#rotation-length").html(data.rotationFrequencyDays + ' days');
+                $("#rotation-end").html(data.nextRotationTime + ' UTC');
+            });
+        }
     </script>
 
 </head>
