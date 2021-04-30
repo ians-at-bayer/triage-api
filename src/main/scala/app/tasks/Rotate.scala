@@ -1,7 +1,7 @@
 package app.tasks
 
 import app.business.{MessageGenerator, SlackNotifier}
-import app.dao.{PeopleDao, Person, SettingsDao, TeamDao}
+import app.dao.{PeopleDao, SettingsDao, TeamDao}
 import com.bayer.scala.transactions.TransactionalFunction
 import org.slf4j.{Logger, LoggerFactory}
 import org.springframework.scheduling.annotation.Scheduled
@@ -17,7 +17,8 @@ class Rotate(slackNotifier: SlackNotifier,
 
   private val Log: Logger = LoggerFactory.getLogger(this.getClass)
 
-  @Scheduled(fixedRate = 10 * 60 * 1000, initialDelay = 1000)
+  //run every 30 seconds
+  @Scheduled(fixedRate = 30 * 1000, initialDelay = 1000)
   def doRotation(): Unit = {
 
     teamDao.getAllTeamsIds.foreach(teamId => {

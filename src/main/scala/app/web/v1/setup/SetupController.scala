@@ -6,6 +6,9 @@ import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation._
 
+import java.time.temporal.ChronoUnit
+import java.time.Instant
+
 @CrossOrigin
 @RestController
 @RequestMapping(Array("/v1"))
@@ -33,6 +36,9 @@ class SetupController(settingsDao: SettingsDao,
     val teamId = teamDao.createTeam(setup.teamName)
 
     setup.people.foreach(people => peopleDao.insertPerson(people.name, people.slackId, teamId))
+
+    val diff = Instant.now().until(setup.rotationConfig.nextRotationTime, ChronoUnit.NANOS)
+    if (diff <= 0) return new ResponseEntity("The next rotation time must be later than the current time", HttpStatus.BAD_REQUEST)
 
     settingsDao.create(Settings(setup.slackConfig.slackHookUrl, teamId, 0,setup.slackConfig.slackMessage,
       setup.rotationConfig.nextRotationTime, setup.rotationConfig.rotationFrequencyDays))

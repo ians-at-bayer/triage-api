@@ -4,12 +4,13 @@ import app.dao.{PeopleDao, SettingsDao}
 import app.web.v1.ErrorMessageDTO
 import io.swagger.annotations.{Api, ApiOperation, ApiParam, ApiResponse, ApiResponses}
 
-import javax.servlet.http.HttpServletRequest
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.{CrossOrigin, PathVariable, RequestBody, RequestMapping, RequestMethod, ResponseStatus, RestController}
 
+import java.time.Instant
 import scala.util.Try
+import java.time.temporal.ChronoUnit
 
 @CrossOrigin
 @RestController
@@ -40,8 +41,14 @@ class RotationController(peopleDao: PeopleDao, settingsDao: SettingsDao) {
 
     val teamId = team.get.teamId
 
-    if (config.nextRotationTime.isDefined)
-      settingsDao.setNextRotation(teamId, config.nextRotationTime.get)
+    if (config.nextRotationTime.isDefined) {
+      val rotationTime = config.nextRotationTime.get
+
+      val diff = Instant.now().until(rotationTime, ChronoUnit.NANOS)
+      if (diff <= 0) return new ResponseEntity("The next rotation time must be later than the current time", HttpStatus.BAD_REQUEST)
+
+      settingsDao.setNextRotation(teamId, rotationTime)
+    }
 
     if (config.rotationFrequencyDays.isDefined)
       settingsDao.setRotationFrequencyDays(teamId, config.rotationFrequencyDays.get)
