@@ -1,19 +1,18 @@
 # cf-deploy.coffee
 module.exports = (cfDeploy) ->
   env = cfDeploy.args.env
-  teamName = cfDeploy.args.teamName
 
   {requiredParams} = cfDeploy.deployTools
   requiredParams(cfDeploy.args, 'env')
-  requiredParams(cfDeploy.args, 'teamName')
 
-  appName = "support-triage-rotations-manager-#{teamName}"
+  envTail = if env == "d" then "-d" else ""
+
+  appName = "support-triage-rotations-manager#{envTail}"
 
   appDomain = if env == "p" then "cf.local" else "mcf-np.local"
 
   console.log("************************** domain       = #{appDomain}")
   console.log("************************** api name     = #{appName}")
-  console.log("************************** team name    = #{teamName}")
 
   buildpack: 'java_buildpack'
   cfBaseName: "#{appName}"
@@ -23,7 +22,7 @@ module.exports = (cfDeploy) ->
   environment:
     APPLICATION_NAME: "#{appName}"
   route: "#{appName}"
-  services: ["support-triage-rotations-manager-db"]
+  services: ["support-triage-rotations-manager-config#{envTail}"]
   memoryLimit: '1G'
   instances: 1
 

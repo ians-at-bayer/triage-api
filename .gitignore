@@ -2,5 +2,6 @@ target
 .idea
 project
 setup.json
-user-deploy/Database.json
+user-deploy/ConfigDev.json
+user-deploy/ConfigTest.json
 src/main/webapp/rds-combined-ca-bundle.pem
