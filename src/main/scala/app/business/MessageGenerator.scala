@@ -1,18 +1,26 @@
 package app.business
 
-import app.dao.{PeopleDao, Person, SettingsDao}
+import app.config.AppProperties
+import app.dao.{Person, SettingsDao}
+import org.slf4j.{Logger, LoggerFactory}
 import org.springframework.stereotype.Component
 
 @Component
 class MessageGenerator(settingsDao: SettingsDao,
-                       peopleDao: PeopleDao) {
+                       appProperties: AppProperties) {
+
+  private val Log: Logger = LoggerFactory.getLogger(this.getClass)
 
   def generateMessage(personOnSupport: Person): String = {
-    val settings = settingsDao.settings
+    val settings = settingsDao.settings(personOnSupport.teamId).get
 
-    settings.slackMessage
+    val message = settings.slackMessage
       .replaceAll("""\[slackid\]""", personOnSupport.slackId)
       .replaceAll("""\[name\]""", personOnSupport.name)
-      .replaceAll("""\[cardurl\]""", settings.baseUrl + "/oncall.html")
+      .replaceAll("""\[cardurl\]""", appProperties.baseUrl + "/oncall.html")
+
+    Log.info(s"Generated Support Message: ${message}")
+
+    message
   }
 }

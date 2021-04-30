@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component
 @Component
 class SlackNotifier(httpClient: SimpleHttp, settingsDao: SettingsDao) {
 
-  def sendMessage(message: String): Boolean = {
-    val slackHookUrl = settingsDao.settings.slackHookUrl
+  def sendMessage(teamId: Int, message: String): Boolean = {
+    val slackHookUrl = settingsDao.settings(teamId).get.slackHookUrl
 
     httpClient.post(slackHookUrl,
       s"""{"text": "*On Call Support Person Change Notification*\n$message"}""")

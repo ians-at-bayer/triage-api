@@ -3,11 +3,12 @@ package app.web.v1.people
 import app.dao.{PeopleDao, SettingsDao}
 import app.web.v1.ErrorMessageDTO
 import io.swagger.annotations.{Api, ApiOperation, ApiParam, ApiResponse, ApiResponses}
+
 import javax.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.bind.annotation.{CrossOrigin, RequestBody, RequestMapping, RequestMethod, ResponseStatus, RestController}
+import org.springframework.web.bind.annotation.{CrossOrigin, PathVariable, RequestBody, RequestMapping, RequestMethod, ResponseStatus, RestController}
 
 import scala.util.Try
 
@@ -23,12 +24,21 @@ class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao, peopleBus
     value = "Returns all people in their rotation order",
     produces = "application/json",
     code = 200)
-  @RequestMapping(value = Array("/people"), method = Array(RequestMethod.GET), produces = Array("application/json; charset=utf-8"))
-  def listPeople(): ResponseEntity[Any] = {
-    val pointerNumber = settingsDao.settings.orderPointer
+  @RequestMapping(value = Array("/people/{teamId}"), method = Array(RequestMethod.GET), produces = Array("application/json; charset=utf-8"))
+  def listPeople(@PathVariable(name = "teamId", required = true) teamIdString: String): ResponseEntity[Any] = {
+
+    val teamIdOption = Try(teamIdString.toInt) recover {
+      case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Team ID format is invalid"), HttpStatus.BAD_REQUEST)
+    }
+
+    val team = settingsDao.settings(teamIdOption.get)
+    if (team.isEmpty) return new ResponseEntity(ErrorMessageDTO("Team ID not found"), HttpStatus.BAD_REQUEST)
+
+    val teamId = team.get.teamId
+    val pointerNumber = settingsDao.settings(teamId).get.orderPointer
 
     val people = peopleDao
-      .loadAllPeopleOrdered()
+      .loadAllPeopleOrdered(teamId)
       .map(person => PersonDTO.fromPerson(person, pointerNumber == person.order))
 
     new ResponseEntity(people, HttpStatus.OK)
@@ -43,11 +53,21 @@ class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao, peopleBus
     new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Bad Request"),
   ))
   @ResponseStatus(value = HttpStatus.CREATED) // This annotation necessary to keep swagger from listing 200 as a possible response code.
-  @RequestMapping(value = Array("/people"), method = Array(RequestMethod.POST), produces = Array("application/json; charset=utf-8"))
+  @RequestMapping(value = Array("/people/{teamId}"), method = Array(RequestMethod.POST), produces = Array("application/json; charset=utf-8"))
   @Transactional
-  def addPeople(@ApiParam(value = "peopleToAdd") @RequestBody people: Array[PersonDTO]): ResponseEntity[Any] = {
+  def addPeople(@PathVariable(name = "teamId", required = true) teamIdString: String,
+                 @ApiParam(value = "peopleToAdd") @RequestBody people: Array[PersonDTO]): ResponseEntity[Any] = {
 
-    Try(peopleBusiness.createPeople(people)) recover {
+    val teamIdOption = Try(teamIdString.toInt) recover {
+      case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Team ID format is invalid"), HttpStatus.BAD_REQUEST)
+    }
+
+    val team = settingsDao.settings(teamIdOption.get)
+    if (team.isEmpty) return new ResponseEntity(ErrorMessageDTO("Team ID not found"), HttpStatus.BAD_REQUEST)
+
+    val teamId = team.get.teamId
+
+    Try(peopleBusiness.createPeople(teamId, people)) recover {
       case e: IllegalArgumentException => return new ResponseEntity(ErrorMessageDTO(e.getMessage), HttpStatus.BAD_REQUEST)
     }
 
@@ -64,18 +84,27 @@ class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao, peopleBus
     new ApiResponse(code = 404, response = classOf[ErrorMessageDTO], message = "Not Found")
   ))
   @ResponseStatus(value = HttpStatus.NO_CONTENT) // This annotation necessary to keep swagger from listing 200 as a possible response code.
-  @RequestMapping(value = Array("/people"), method = Array(RequestMethod.DELETE), consumes = Array("application/json"))
+  @RequestMapping(value = Array("/people/{teamId}"), method = Array(RequestMethod.DELETE), consumes = Array("application/json"))
   @Transactional
-  def deletePeople(httpRequest: HttpServletRequest,
+  def deletePeople(@PathVariable(name = "teamId", required = true) teamIdString: String,
                    @ApiParam(value = "peopleIdsToDelete") @RequestBody request: Array[Int]): ResponseEntity[Any]  = {
 
-    val onCallPersonId = peopleDao.loadPersonByOrder(settingsDao.settings.orderPointer).get.id
+    val teamIdOption = Try(teamIdString.toInt) recover {
+      case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Team ID format is invalid"), HttpStatus.BAD_REQUEST)
+    }
+
+    val team = settingsDao.settings(teamIdOption.get)
+    if (team.isEmpty) return new ResponseEntity(ErrorMessageDTO("Team ID not found"), HttpStatus.BAD_REQUEST)
+
+    val teamId = team.get.teamId
+
+    val onCallPersonId = peopleDao.loadPersonByOrder(teamId, settingsDao.settings(teamId).get.orderPointer).get.id
 
     if (request.contains(onCallPersonId))
       return new ResponseEntity(ErrorMessageDTO("Cannot delete the person who is currently on call"), HttpStatus.BAD_REQUEST)
 
     request.foreach(personId => {
-      Try (peopleDao.removePerson(personId)) recover {
+      Try (peopleDao.removePerson(teamId, personId)) recover {
         case e: IllegalArgumentException => return new ResponseEntity(e.getMessage, HttpStatus.NOT_FOUND)
       }
     })

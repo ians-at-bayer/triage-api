@@ -7,62 +7,63 @@ import com.bayer.scala.jdbc.ScalaJdbcTemplate
 import org.springframework.stereotype.Repository
 
 @Repository
-class SettingsDao(template: ScalaJdbcTemplate) {
+class SettingsDao(template: ScalaJdbcTemplate, teamDao: TeamDao) {
 
-  def shouldRotate: Boolean =
+  def shouldRotate(teamId: Int): Boolean =
     template.queryForObject[Int](
-      "select (now() >= next_rotation)::integer from settings").getOrElse(0) == 1
+      "select (now() >= next_rotation)::integer from settings where team_id = ?", teamId).getOrElse(0) == 1
 
-  def rotate: Int = {
-    rotateOrderPointer
-    progressRotationTimestamp
+  def rotate(teamId: Int): Int = {
+    rotateOrderPointer(teamId)
+    progressRotationTimestamp(teamId)
 
-    settings.orderPointer
+    settings(teamId).get.orderPointer
   }
 
-  def settings : Settings = template.queryForObject(
-    "select * from settings", new SettingsRowMapper).head
+  def create(settings: Settings): Unit = {
+    val sql = "insert into settings (team_id, slack_hook_url, order_pointer, next_rotation, rotation_frequency_days, slack_message) values (?,?,?,?,?,?)"
 
-  def setPointer(orderNumber: Int): Unit = {
-    val sql = "update settings set order_pointer = ?"
-
-    template.update(sql, orderNumber)
+    template.update(sql, settings.teamId, settings.slackHookUrl, settings.orderPointer, new Timestamp(settings.nextRotation.toEpochMilli),
+      settings.rotationFrequency, settings.slackMessage)
   }
 
-  def setSlackMessage(message: String): Unit = {
-    val sql = "update settings set slack_message = ?"
+  def settings(teamId: Int) : Option[Settings] = template.queryForObject(
+    "select * from settings where team_id = ?", new SettingsRowMapper, teamId).headOption
 
-    template.update(sql, message)
+  def setPointer(teamId: Int, orderNumber: Int): Unit = {
+    val sql = "update settings set order_pointer = ? where team_id = ?"
+
+    template.update(sql, orderNumber, teamId)
   }
 
-  def setSlackHookURL(url: String): Unit = {
-    val sql = "update settings set slack_hook_url = ?"
+  def setSlackMessage(teamId: Int, message: String): Unit = {
+    val sql = "update settings set slack_message = ? where team_id = ?"
 
-    template.update(sql, url)
+    template.update(sql, message, teamId)
   }
 
-  def setRotationFrequencyDays(days: Int): Unit = {
-    val sql = "update settings set rotation_frequency_days = ?"
+  def setSlackHookURL(teamId: Int, url: String): Unit = {
+    val sql = "update settings set slack_hook_url = ? where team_id = ?"
 
-    template.update(sql, days)
+    template.update(sql, url, teamId)
   }
 
-  def setNextRotation(instant: Instant): Unit = {
-    val sql = "update settings set next_rotation = ?"
+  def setRotationFrequencyDays(teamId: Int, days: Int): Unit = {
+    val sql = "update settings set rotation_frequency_days = ? where team_id = ?"
 
-    template.update(sql, new Timestamp(instant.toEpochMilli))
+    template.update(sql, days, teamId)
   }
 
-  def setBaseUrl(url: String): Unit = {
-    val sql = "update settings set base_url = ?"
+  def setNextRotation(teamId: Int, instant: Instant): Unit = {
+    val sql = "update settings set next_rotation = ? where team_id = ?"
 
-    template.update(sql, url)
+    template.update(sql, new Timestamp(instant.toEpochMilli), teamId)
   }
 
-  private def rotateOrderPointer : Int = template.update(
-    "update settings set order_pointer = (select mod(order_pointer+1, max(order_number)+1) from people)")
+  private def rotateOrderPointer(teamId: Int) : Int = template.update(
+    "update settings set order_pointer = (select mod(order_pointer+1, max(order_number)+1) from people where team_id = ?)", teamId)
 
-  private def progressRotationTimestamp: Int = template.update(
-    "update settings set next_rotation = (next_rotation + (rotation_frequency_days || 'days')::interval)")
+  private def progressRotationTimestamp(teamId: Int): Int = template.update(
+    "update settings set next_rotation = (next_rotation + (rotation_frequency_days || 'days')::interval) where team_id = ?", teamId)
 
 }

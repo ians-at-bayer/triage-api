@@ -28,20 +28,25 @@ class OnCallController(peopleDao: PeopleDao,
     new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Invalid format"),
     new ApiResponse(code = 404, response = classOf[ErrorMessageDTO], message = "Not Found")
   ))
-  @RequestMapping(value = Array("/on-call/{personId}"), method = Array(RequestMethod.PUT))
+  @RequestMapping(value = Array("/on-call/{teamId}/{personId}"), method = Array(RequestMethod.PUT))
   @Transactional
-  def setOnCallPerson(@PathVariable(name = "personId", required = true) personIdString: String): ResponseEntity[Any]  = {
+  def setOnCallPerson(@PathVariable(name = "teamId", required = true) teamIdString: String,
+                       @PathVariable(name = "personId", required = true) personIdString: String): ResponseEntity[Any]  = {
+
+    val teamId = Try(teamIdString.toInt) recover {
+      case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Team ID format is invalid"), HttpStatus.BAD_REQUEST)
+    }
 
     val personId = Try(personIdString.toInt) recover {
       case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Person ID format is invalid"), HttpStatus.BAD_REQUEST)
     }
 
-    val person = peopleDao.loadPerson(personId.get)
+    val person = peopleDao.loadPerson(teamId.get, personId.get)
       .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"Person not found"), HttpStatus.NOT_FOUND))
 
-    settingsDao.setPointer(person.order)
+    settingsDao.setPointer(person.teamId, person.order)
 
-    slackNotifier.sendMessage(messageGenerator.generateMessage(person))
+    slackNotifier.sendMessage(person.teamId, messageGenerator.generateMessage(person))
 
     new ResponseEntity(HttpStatus.OK)
   }
@@ -53,11 +58,21 @@ class OnCallController(peopleDao: PeopleDao,
   @ApiResponses(value = Array(
     new ApiResponse(code = 200, message = "OK")
   ))
-  @RequestMapping(value = Array("/on-call"), method = Array(RequestMethod.GET), produces = Array("application/json; charset=utf-8"))
-  def getOnCallPerson(): PersonDTO  = {
-    val personOnCall = peopleDao.loadPersonByOrder(settingsDao.settings.orderPointer)
+  @RequestMapping(value = Array("/on-call/{teamId}"), method = Array(RequestMethod.GET), produces = Array("application/json; charset=utf-8"))
+  def getOnCallPerson(@PathVariable(name = "teamId", required = true) teamIdString: String): ResponseEntity[Any]  = {
 
-    PersonDTO.fromPerson(personOnCall.get, true)
+    val teamIdOption = Try(teamIdString.toInt) recover {
+      case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Team ID format is invalid"), HttpStatus.BAD_REQUEST)
+    }
+
+    val teamId = teamIdOption.get
+    val team = settingsDao.settings(teamId)
+
+    if (team.isEmpty) return new ResponseEntity(ErrorMessageDTO("Team ID not found"), HttpStatus.BAD_REQUEST)
+
+    val personOnCall = peopleDao.loadPersonByOrder(team.get.teamId, team.get.orderPointer)
+
+    new ResponseEntity(PersonDTO.fromPerson(personOnCall.get, true), HttpStatus.OK)
   }
 
 }

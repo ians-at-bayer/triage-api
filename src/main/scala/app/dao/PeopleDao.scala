@@ -11,41 +11,41 @@ class PeopleDao(template: ScalaJdbcTemplate) {
   //
 
   /** Has more than one person */
-  def peopleExist(): Boolean = template.queryForObject[Long](
-    "select count(*) from people").getOrElse(0L) > 1L
+  def peopleExist(teamId: Int): Boolean = template.queryForObject[Long](
+    "select count(*) from people where team_id = ?", teamId).getOrElse(0L) > 1L
 
-  def loadPerson(id: Int) : Option[Person] =  {
-    val sql = "select * from people where id = ?"
+  def loadPerson(teamId: Int, id: Int) : Option[Person] =  {
+    val sql = "select * from people where id = ? and team_id = ?"
 
-    template.queryForObject(sql, new PersonRowMapper, id).headOption
+    template.queryForObject(sql, new PersonRowMapper, id, teamId).headOption
   }
 
-  def loadPersonByOrder(orderPointer: Int) : Option[Person] = {
-    val sql = "select * from people where order_number = ?"
+  def loadPersonByOrder(teamId: Int, orderPointer: Int) : Option[Person] = {
+    val sql = "select * from people where order_number = ? and team_id = ?"
 
-    template.queryForObject(sql, new PersonRowMapper, orderPointer).headOption
+    template.queryForObject(sql, new PersonRowMapper, orderPointer, teamId).headOption
   }
 
-  def loadAllPeopleOrdered(): Seq[Person] = {
-    val sql = "select * from people order by order_number asc"
+  def loadAllPeopleOrdered(teamId: Int): Seq[Person] = {
+    val sql = "select * from people where team_id = ? order by order_number asc"
 
-    template.query[Person](sql, new PersonRowMapper)
+    template.query[Person](sql, new PersonRowMapper, teamId)
   }
 
   //
   // INSERT
   //
-  def insertPerson(name: String, slackId: String): Unit = {
-    val sql = "insert into people (name, slack_id, order_number) " +
-      "select ?, ?, COALESCE(max(order_number)+1, 0) from people"
+  def insertPerson(name: String, slackId: String, teamId: Int): Unit = {
+    val sql = "insert into people (name, team_id, slack_id, order_number) " +
+      "select ?, ?, ?, COALESCE(max(order_number)+1, 0) from people where team_id = ?"
 
-    template.update(sql, name, slackId)
+    template.update(sql, name, teamId, slackId, teamId)
   }
 
   //
   // UPDATE
   //
-  def changeOrder(orderedPeopleIds: Seq[Int]) = {
+  def changeOrder(teamId: Int, orderedPeopleIds: Seq[Int]) = {
     val sql = "update people set order_number = ? where id = ?"
 
     //make sure all people are distinct
@@ -53,7 +53,7 @@ class PeopleDao(template: ScalaJdbcTemplate) {
       "Ordered people IDs must be distinct")
 
     //make sure all people exist
-    require(orderedPeopleIds.diff(loadAllPeopleOrdered.map(_.id)).isEmpty,
+    require(orderedPeopleIds.diff(loadAllPeopleOrdered(teamId).map(_.id)).isEmpty,
       "One or more people IDs do not exist")
 
     (0 to orderedPeopleIds.length-1)
@@ -64,8 +64,8 @@ class PeopleDao(template: ScalaJdbcTemplate) {
   //
   // DELETE
   //
-  def removePerson(id: Int): Unit = {
-    val person = loadPerson(id)
+  def removePerson(teamId: Int, id: Int): Unit = {
+    val person = loadPerson(teamId, id)
       .getOrElse(throw new IllegalArgumentException(s"Person with ID $id does not exist"))
 
     val sql1 = "delete from people where id = ?"

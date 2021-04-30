@@ -1,7 +1,9 @@
 package app.config
 
 import com.monsanto.mbl.properties.CloudPropertyLoader
+import org.springframework.stereotype.Component
 
+@Component
 class AppProperties {
 
   //
@@ -17,10 +19,15 @@ class AppProperties {
   //
   // Database
   //
-  def databaseUsername: String = props("database.username")
+  def databaseUsername: String = props("config.dbUsername")
 
-  def databasePassword: String = props("database.password")
+  def databasePassword: String = props("config.dbPassword")
 
-  def databaseUrl: String = props("database.url")
+  def databaseUrl: String = props("config.dbUrl")
+
+  //
+  // Base URL
+  //
+  def baseUrl: String = props("config.baseUrl")
 
 }
