@@ -24,12 +24,7 @@ Simple Scala web application for managing support triage rotations between team 
 
 
 ### Future Development Plans
-* Support for multiple teams:
-   * New POST /create-team endpoint. Will create a team and put you on it.
-   * All endpoints besides POST /create-team will require you are on a team
-     to use them
-   * To join a team, just have an existing member call the POST /people
-     endpoint with your user id in the body
+* Microsoft Teams support
 * Frontend:
    * Contact cards have a different security policy than Swagger endpoints
    * Users can join a team on the web app
