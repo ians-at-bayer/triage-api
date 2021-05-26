@@ -15,6 +15,11 @@ class PeopleBusiness(peopleDao: PeopleDao) {
     if (!peopleToCreate.forall(_.onSupport.isEmpty))
       throw new IllegalArgumentException("On support flag cannot be set when adding a person")
 
-    peopleToCreate.foreach(person => peopleDao.insertPerson(person.name, person.slackId, teamId))
+    peopleToCreate.foreach(person => {
+      if (peopleDao.loadPersonByUserId(person.slackId).isDefined)
+        throw new IllegalArgumentException(s"Person '${person.slackId}' already exists")
+
+      peopleDao.insertPerson(person.name, person.slackId, teamId)
+    })
   }
 }

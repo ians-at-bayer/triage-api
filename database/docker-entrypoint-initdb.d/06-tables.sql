@@ -14,7 +14,7 @@ create table people (
 	id              serial          not null primary key,
 	team_id         int             not null references teams (id),
 	name            varchar(999)    not null,
-	slack_id        varchar(999)    not null,
+	slack_id        varchar(999)    not null unique,
 	order_number    int             not null check (order_number >= 0)
 );
 

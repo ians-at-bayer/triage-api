@@ -2,9 +2,11 @@ package app.web.v1.setup
 
 import app.dao.{PeopleDao, Settings, SettingsDao, TeamDao}
 import io.swagger.annotations._
+import org.slf4j.{Logger, LoggerFactory}
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation._
+import springfox.documentation.annotations.ApiIgnore
 
 import java.time.temporal.ChronoUnit
 import java.time.Instant
@@ -17,6 +19,8 @@ class SetupController(settingsDao: SettingsDao,
                       peopleDao: PeopleDao,
                       teamDao: TeamDao) {
 
+  private val Log: Logger = LoggerFactory.getLogger(this.getClass)
+
   @ApiOperation(
     value = "Submit the first time setup for your team",
     produces = "application/json"
@@ -26,7 +30,8 @@ class SetupController(settingsDao: SettingsDao,
   @ResponseStatus(value = HttpStatus.CREATED) // This annotation necessary to keep swagger from listing 200 as a possible response code.
   @RequestMapping(value = Array("/setup"), method = Array(RequestMethod.POST), consumes = Array("application/json"))
   @Transactional
-  def setup(@ApiParam(value = "setup") @RequestBody setup: SetupDTO): ResponseEntity[Any]  = {
+  def setup(@ApiIgnore @RequestHeader("user-id") userId: String,
+            @ApiParam(value = "setup") @RequestBody setup: SetupDTO): ResponseEntity[Any]  = {
 
     //add new people
     if (setup.people.length < 2)
@@ -42,6 +47,8 @@ class SetupController(settingsDao: SettingsDao,
 
     settingsDao.create(Settings(setup.slackConfig.slackHookUrl, teamId, 0,setup.slackConfig.slackMessage,
       setup.rotationConfig.nextRotationTime, setup.rotationConfig.rotationFrequencyDays))
+
+    Log.info(s"User ${userId} created team ${setup.teamName} [$teamId]")
 
     new ResponseEntity(SetupResponse(teamId), HttpStatus.CREATED)
   }

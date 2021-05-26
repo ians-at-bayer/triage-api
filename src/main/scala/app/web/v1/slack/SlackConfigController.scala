@@ -3,14 +3,11 @@ package app.web.v1.slack
 import app.business.{MessageGenerator, SlackNotifier}
 import app.dao.{PeopleDao, SettingsDao}
 import app.web.v1.ErrorMessageDTO
-import io.swagger.annotations.{Api, ApiOperation, ApiParam, ApiResponse, ApiResponses}
-
-import javax.servlet.http.HttpServletRequest
+import io.swagger.annotations._
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.bind.annotation.{CrossOrigin, PathVariable, RequestBody, RequestMapping, RequestMethod, ResponseStatus, RestController}
-
-import scala.util.Try
+import org.springframework.web.bind.annotation._
+import springfox.documentation.annotations.ApiIgnore
 
 @CrossOrigin
 @RestController
@@ -29,20 +26,14 @@ class SlackConfigController(settingsDao: SettingsDao,
     new ApiResponse(code = 200, message = "OK"),
     new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Bad Request"),
   ))
-  @RequestMapping(value = Array("/slack-config/{teamId}"), method = Array(RequestMethod.POST))
+  @RequestMapping(value = Array("/slack-config"), method = Array(RequestMethod.POST))
   @Transactional
-  def setConfig(@PathVariable(name = "teamId", required = true) teamIdString: String,
+  def setConfig(@ApiIgnore @RequestHeader("user-id") userId: String,
                 @ApiParam(value = "slackConfig") @RequestBody slackConfig: SlackConfigDTO
                ): ResponseEntity[Any] = {
 
-    val teamIdOption = Try(teamIdString.toInt) recover {
-      case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Team ID format is invalid"), HttpStatus.BAD_REQUEST)
-    }
-
-    val team = settingsDao.settings(teamIdOption.get)
-    if (team.isEmpty) return new ResponseEntity(ErrorMessageDTO("Team ID not found"), HttpStatus.BAD_REQUEST)
-
-    val teamId = team.get.teamId
+    val teamId = peopleDao.loadPersonByUserId(userId)
+      .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${userId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
 
     if (slackConfig.slackHookUrl.isDefined) settingsDao.setSlackHookURL(teamId, slackConfig.slackHookUrl.get)
 
@@ -56,18 +47,13 @@ class SlackConfigController(settingsDao: SettingsDao,
     produces = "application/json"
   )
   @ApiResponses(value = Array(
-    new ApiResponse(code = 200, message = "OK")
+    new ApiResponse(code = 200, message = "OK"),
+    new ApiResponse(code = 400, message = "User has no team assigned")
   ))
-  @RequestMapping(value = Array("/slack-config/{teamId}"), method = Array(RequestMethod.GET), produces = Array("application/json; charset=utf-8"))
-  def viewConfig(@PathVariable(name = "teamId", required = true) teamIdString: String): ResponseEntity[Any]  = {
-    val teamIdOption = Try(teamIdString.toInt) recover {
-      case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Team ID format is invalid"), HttpStatus.BAD_REQUEST)
-    }
-
-    val team = settingsDao.settings(teamIdOption.get)
-    if (team.isEmpty) return new ResponseEntity(ErrorMessageDTO("Team ID not found"), HttpStatus.BAD_REQUEST)
-
-    val teamId = team.get.teamId
+  @RequestMapping(value = Array("/slack-config"), method = Array(RequestMethod.GET), produces = Array("application/json; charset=utf-8"))
+  def viewConfig(@ApiIgnore @RequestHeader("user-id") userId: String): ResponseEntity[Any]  = {
+    val teamId = peopleDao.loadPersonByUserId(userId)
+      .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${userId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
 
     val settings = settingsDao.settings(teamId).get
 
@@ -79,18 +65,13 @@ class SlackConfigController(settingsDao: SettingsDao,
     produces = "application/json"
   )
   @ApiResponses(value = Array(
-    new ApiResponse(code = 200, message = "OK")
+    new ApiResponse(code = 200, message = "OK"),
+    new ApiResponse(code = 400, message = "User has no team assigned")
   ))
-  @RequestMapping(value = Array("/slack-send/{teamId}"), method = Array(RequestMethod.GET))
-  def resendSlackNotification(@PathVariable(name = "teamId", required = true) teamIdString: String): ResponseEntity[Any] = {
-    val teamIdOption = Try(teamIdString.toInt) recover {
-      case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Team ID format is invalid"), HttpStatus.BAD_REQUEST)
-    }
-
-    val team = settingsDao.settings(teamIdOption.get)
-    if (team.isEmpty) return new ResponseEntity(ErrorMessageDTO("Team ID not found"), HttpStatus.BAD_REQUEST)
-
-    val teamId = team.get.teamId
+  @RequestMapping(value = Array("/slack-send"), method = Array(RequestMethod.GET))
+  def resendSlackNotification(@ApiIgnore @RequestHeader("user-id") userId: String): ResponseEntity[Any] = {
+    val teamId = peopleDao.loadPersonByUserId(userId)
+      .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${userId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
 
     val personOnCall = peopleDao.loadPersonByOrder(teamId, settingsDao.settings(teamId).get.orderPointer)
     slackNotifier.sendMessage(teamId, messageGenerator.generateMessage(personOnCall.get))

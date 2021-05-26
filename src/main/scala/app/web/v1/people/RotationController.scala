@@ -3,10 +3,10 @@ package app.web.v1.people
 import app.dao.{PeopleDao, SettingsDao}
 import app.web.v1.ErrorMessageDTO
 import io.swagger.annotations.{Api, ApiOperation, ApiParam, ApiResponse, ApiResponses}
-
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.bind.annotation.{CrossOrigin, PathVariable, RequestBody, RequestMapping, RequestMethod, ResponseStatus, RestController}
+import org.springframework.web.bind.annotation.{CrossOrigin, PathVariable, RequestBody, RequestHeader, RequestMapping, RequestMethod, ResponseStatus, RestController}
+import springfox.documentation.annotations.ApiIgnore
 
 import java.time.Instant
 import scala.util.Try
@@ -26,26 +26,20 @@ class RotationController(peopleDao: PeopleDao, settingsDao: SettingsDao) {
     new ApiResponse(code = 200, message = "OK"),
     new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Bad Request"),
   ))
-  @RequestMapping(value = Array("/rotation-config/{teamId}"), method = Array(RequestMethod.POST))
+  @RequestMapping(value = Array("/rotation-config"), method = Array(RequestMethod.POST))
   @Transactional
-  def setConfig(@PathVariable(name = "teamId", required = true) teamIdString: String,
+  def setConfig(@ApiIgnore @RequestHeader("user-id") userId: String,
                 @ApiParam(value = "config") @RequestBody config: RotationConfigDTO
                ): ResponseEntity[Any] = {
 
-    val teamIdOption = Try(teamIdString.toInt) recover {
-      case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Team ID format is invalid"), HttpStatus.BAD_REQUEST)
-    }
-
-    val team = settingsDao.settings(teamIdOption.get)
-    if (team.isEmpty) return new ResponseEntity(ErrorMessageDTO("Team ID not found"), HttpStatus.BAD_REQUEST)
-
-    val teamId = team.get.teamId
+    val teamId = peopleDao.loadPersonByUserId(userId)
+      .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${userId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
 
     if (config.nextRotationTime.isDefined) {
       val rotationTime = config.nextRotationTime.get
 
       val diff = Instant.now().until(rotationTime, ChronoUnit.NANOS)
-      if (diff <= 0) return new ResponseEntity("The next rotation time must be later than the current time", HttpStatus.BAD_REQUEST)
+      if (diff <= 0) return new ResponseEntity(ErrorMessageDTO("The next rotation time must be later than the current time"), HttpStatus.BAD_REQUEST)
 
       settingsDao.setNextRotation(teamId, rotationTime)
     }
@@ -61,18 +55,13 @@ class RotationController(peopleDao: PeopleDao, settingsDao: SettingsDao) {
     produces = "application/json"
   )
   @ApiResponses(value = Array(
-    new ApiResponse(code = 200, message = "OK")
+    new ApiResponse(code = 200, message = "OK"),
+    new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Bad Request")
   ))
-  @RequestMapping(value = Array("/rotation-config/{teamId}"), method = Array(RequestMethod.GET), produces = Array("application/json; charset=utf-8"))
-  def viewConfig(@PathVariable(name = "teamId", required = true) teamIdString: String): ResponseEntity[Any]  = {
-    val teamIdOption = Try(teamIdString.toInt) recover {
-      case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Team ID format is invalid"), HttpStatus.BAD_REQUEST)
-    }
-
-    val team = settingsDao.settings(teamIdOption.get)
-    if (team.isEmpty) return new ResponseEntity(ErrorMessageDTO("Team ID not found"), HttpStatus.BAD_REQUEST)
-
-    val teamId = team.get.teamId
+  @RequestMapping(value = Array("/rotation-config"), method = Array(RequestMethod.GET), produces = Array("application/json; charset=utf-8"))
+  def viewConfig(@ApiIgnore @RequestHeader("user-id") userId: String): ResponseEntity[Any]  = {
+    val teamId = peopleDao.loadPersonByUserId(userId)
+      .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${userId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
     val settings = settingsDao.settings(teamId).get
 
     new ResponseEntity(RotationConfigDTO(Some(settings.nextRotation), Some(settings.rotationFrequency)), HttpStatus.OK)
@@ -84,21 +73,16 @@ class RotationController(peopleDao: PeopleDao, settingsDao: SettingsDao) {
   )
   @ApiResponses(value = Array(
     new ApiResponse(code = 204, message = "No Content"),
+    new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Bad Request"),
     new ApiResponse(code = 404, response = classOf[ErrorMessageDTO], message = "Not Found")
   ))
   @ResponseStatus(value = HttpStatus.NO_CONTENT) // This annotation necessary to keep swagger from listing 200 as a possible response code.
-  @RequestMapping(value = Array("/rotation-order/{teamId}"), method = Array(RequestMethod.POST), consumes = Array("application/json"))
+  @RequestMapping(value = Array("/rotation-order"), method = Array(RequestMethod.POST), consumes = Array("application/json"))
   @Transactional
-  def reorderPeople(@PathVariable(name = "teamId", required = true) teamIdString: String,
+  def reorderPeople(@ApiIgnore @RequestHeader("user-id") userId: String,
                     @ApiParam(value = "rotationOrderByPersonId") @RequestBody request: Array[Int]): ResponseEntity[Any]  = {
-    val teamIdOption = Try(teamIdString.toInt) recover {
-      case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Team ID format is invalid"), HttpStatus.BAD_REQUEST)
-    }
-
-    val team = settingsDao.settings(teamIdOption.get)
-    if (team.isEmpty) return new ResponseEntity(ErrorMessageDTO("Team ID not found"), HttpStatus.BAD_REQUEST)
-
-    val teamId = team.get.teamId
+    val teamId = peopleDao.loadPersonByUserId(userId)
+      .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${userId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
 
     Try (peopleDao.changeOrder(teamId, request)) recover {
       case e: IllegalArgumentException => return new ResponseEntity(ErrorMessageDTO(e.getMessage), HttpStatus.NOT_FOUND)

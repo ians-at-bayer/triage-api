@@ -32,6 +32,12 @@ class PeopleDao(template: ScalaJdbcTemplate) {
     template.query[Person](sql, new PersonRowMapper, teamId)
   }
 
+  def loadPersonByUserId(userId: String) : Option[Person] = {
+    val sql = "select * from people where slack_id = ?"
+
+    template.queryForObject(sql, new PersonRowMapper, userId).headOption
+  }
+
   //
   // INSERT
   //
