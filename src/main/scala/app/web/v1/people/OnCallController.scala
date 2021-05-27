@@ -6,6 +6,7 @@ import app.web.v1.ErrorMessageDTO
 import io.swagger.annotations.{Api, ApiOperation, ApiResponse, ApiResponses}
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.interceptor.TransactionAspectSupport
 import org.springframework.web.bind.annotation._
 import springfox.documentation.annotations.ApiIgnore
 
@@ -29,24 +30,24 @@ class OnCallController(peopleDao: PeopleDao,
     new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Bad Request"),
     new ApiResponse(code = 404, response = classOf[ErrorMessageDTO], message = "Not Found")
   ))
-  @RequestMapping(value = Array("/on-call/{personId}"), method = Array(RequestMethod.PUT))
+  @RequestMapping(value = Array("/on-call/{slackId}"), method = Array(RequestMethod.PUT))
   @Transactional
   def setOnCallPerson(@ApiIgnore @RequestHeader("user-id") userId: String,
-                       @PathVariable(name = "personId", required = true) personIdString: String): ResponseEntity[Any]  = {
+                       @PathVariable(name = "slackId", required = true) slackId: String): ResponseEntity[Any]  = {
 
     val teamId = peopleDao.loadPersonByUserId(userId)
       .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${userId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
 
-    val personId = Try(personIdString.toInt) recover {
-      case e: NumberFormatException => return new ResponseEntity(ErrorMessageDTO("Person ID format is invalid"), HttpStatus.BAD_REQUEST)
-    }
-
-    val person = peopleDao.loadPerson(teamId, personId.get)
+    val person = peopleDao.loadAllPeopleOrdered(teamId).find(_.slackId == slackId)
       .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"Person not found"), HttpStatus.NOT_FOUND))
 
     settingsDao.setPointer(person.teamId, person.order)
 
-    slackNotifier.sendMessage(person.teamId, messageGenerator.generateMessage(person))
+    val slackSendResult = Try(slackNotifier.sendMessage(teamId, messageGenerator.generateMessage(person)))
+    if (slackSendResult.isFailure || !slackSendResult.get) {
+      TransactionAspectSupport.currentTransactionStatus.setRollbackOnly()
+      return new ResponseEntity(ErrorMessageDTO(s"Failed to send a Slack message. Please check your settings and try again later."), HttpStatus.BAD_REQUEST)
+    }
 
     new ResponseEntity(HttpStatus.OK)
   }
@@ -61,7 +62,6 @@ class OnCallController(peopleDao: PeopleDao,
   ))
   @RequestMapping(value = Array("/on-call"), method = Array(RequestMethod.GET), produces = Array("application/json; charset=utf-8"))
   def getOnCallPerson(@ApiIgnore @RequestHeader("user-id") userId: String): ResponseEntity[Any]  = {
-
     val teamId = peopleDao.loadPersonByUserId(userId)
       .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${userId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
 

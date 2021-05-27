@@ -2,6 +2,7 @@ package app.web.v1.people
 
 import app.dao.{PeopleDao, SettingsDao}
 import app.web.v1.ErrorMessageDTO
+import app.web.v1.slack.SlackConfigDTO
 import io.swagger.annotations.{Api, ApiOperation, ApiParam, ApiResponse, ApiResponses}
 
 import javax.servlet.http.HttpServletRequest
@@ -44,60 +45,45 @@ class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao, peopleBus
   }
 
   @ApiOperation(
-    value = "Add one or more people",
+    value = "Update the people on your team",
     produces = "application/json",
-    code = 201)
+    code = 200)
   @ApiResponses(value = Array(
-    new ApiResponse(code = 201, message = "Created"),
+    new ApiResponse(code = 200, message = "OK"),
     new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Bad Request"),
   ))
-  @ResponseStatus(value = HttpStatus.CREATED) // This annotation necessary to keep swagger from listing 200 as a possible response code.
-  @RequestMapping(value = Array("/people"), method = Array(RequestMethod.POST), produces = Array("application/json; charset=utf-8"))
+  @RequestMapping(value = Array("/people"), method = Array(RequestMethod.PUT))
   @Transactional
-  def addPeople(@ApiIgnore @RequestHeader("user-id") userId: String,
-                @ApiParam(value = "peopleToAdd") @RequestBody people: Array[PersonDTO]): ResponseEntity[Any] = {
-
+  def updatePeople(@ApiIgnore @RequestHeader("user-id") userId: String,
+                   @ApiParam(value = "people") @RequestBody peopleUpdate: Array[PersonDTO]): ResponseEntity[Any] = {
     val teamId = peopleDao.loadPersonByUserId(userId)
       .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${userId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
     val pointerNumber = settingsDao.settings(teamId).get.orderPointer
+    val personOnSupport = peopleDao.loadPersonByOrder(teamId, pointerNumber).get
 
-    Try(peopleBusiness.createPeople(teamId, people)) recover {
-      case e: IllegalArgumentException => return new ResponseEntity(ErrorMessageDTO(e.getMessage), HttpStatus.BAD_REQUEST)
-    }
+    val slackIdsUnique = peopleUpdate.map(_.slackId).distinct.length == peopleUpdate.length
+    if (!slackIdsUnique)
+      return new ResponseEntity(ErrorMessageDTO("All Slack IDs must be unique"), HttpStatus.BAD_REQUEST)
 
-    new ResponseEntity(HttpStatus.CREATED)
-  }
+    if (peopleUpdate.length < 2)
+      return new ResponseEntity(ErrorMessageDTO("There must be at least two people for a team"), HttpStatus.BAD_REQUEST)
 
-  @ApiOperation(
-    value = "Delete one or more people",
-    produces = "application/json"
-  )
-  @ApiResponses(value = Array(
-    new ApiResponse(code = 204, message = "No Content"),
-    new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Bad Request"),
-    new ApiResponse(code = 404, response = classOf[ErrorMessageDTO], message = "Not Found")
-  ))
-  @ResponseStatus(value = HttpStatus.NO_CONTENT) // This annotation necessary to keep swagger from listing 200 as a possible response code.
-  @RequestMapping(value = Array("/people"), method = Array(RequestMethod.DELETE), consumes = Array("application/json"))
-  @Transactional
-  def deletePeople(@ApiIgnore @RequestHeader("user-id") userId: String,
-                   @ApiParam(value = "peopleIdsToDelete") @RequestBody request: Array[Int]): ResponseEntity[Any]  = {
+    if (peopleUpdate.length > 6)
+      return new ResponseEntity(ErrorMessageDTO("There cannot be more than six people on a team"), HttpStatus.BAD_REQUEST)
 
-    val teamId = peopleDao.loadPersonByUserId(userId)
-      .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${userId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
+    val updatesHavePersonOnSupport = peopleUpdate.find(person => personOnSupport.slackId == person.slackId).isDefined
+    if (!updatesHavePersonOnSupport)
+      return new ResponseEntity(ErrorMessageDTO(s"The person on support cannot be removed from the team"), HttpStatus.BAD_REQUEST)
 
-    val onCallPersonId = peopleDao.loadPersonByOrder(teamId, settingsDao.settings(teamId).get.orderPointer).get.id
+    //Delete all team members and create the new ones
+    peopleDao.loadAllPeopleOrdered(teamId).map(person => peopleDao.removePerson(teamId, person.id))
+    peopleUpdate.map(person => peopleDao.insertPerson(person.name, person.slackId, teamId))
 
-    if (request.contains(onCallPersonId))
-      return new ResponseEntity(ErrorMessageDTO("Cannot delete the person who is currently on call"), HttpStatus.BAD_REQUEST)
+    //Update the pointer to point to the person who is on support - may be in a different position in the order
+    val personOnSupportNew = peopleDao.loadPersonByUserId(personOnSupport.slackId).get
+    settingsDao.setPointer(teamId, personOnSupportNew.order)
 
-    request.foreach(personId => {
-      Try (peopleDao.removePerson(teamId, personId)) recover {
-        case e: IllegalArgumentException => return new ResponseEntity(e.getMessage, HttpStatus.NOT_FOUND)
-      }
-    })
-
-    new ResponseEntity(HttpStatus.NO_CONTENT)
+    new ResponseEntity(HttpStatus.OK)
   }
 
 }

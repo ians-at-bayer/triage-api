@@ -22,18 +22,14 @@ class TeamController(peopleDao: PeopleDao, teamDao: TeamDao) {
     produces = "application/json"
   )
   @ApiResponses(value = Array(
-    new ApiResponse(code = 200, message = "OK"),
-    new ApiResponse(code = 404, message = "Team not found")
+    new ApiResponse(code = 200, message = "OK")
   ))
   @RequestMapping(value = Array("/team/id"), method = Array(RequestMethod.GET))
   @Transactional
-  def getMyTeamId(@ApiIgnore @RequestHeader("user-id") userId: String): ResponseEntity[Int] = {
-    //return not found instead of bad request because this endpoint is used to determine if users have been
-    //assigned a team
-    val teamId = peopleDao.loadPersonByUserId(userId)
-      .getOrElse(return new ResponseEntity(HttpStatus.NOT_FOUND)).teamId
+  def getMyTeamId(@ApiIgnore @RequestHeader("user-id") userId: String): ResponseEntity[TeamIdDTO] = {
+    val teamId : Option[Int] = peopleDao.loadPersonByUserId(userId).map(_.teamId)
 
-    new ResponseEntity(teamId, HttpStatus.OK)
+    new ResponseEntity(TeamIdDTO(teamId, teamId.isDefined), HttpStatus.OK)
   }
 
   @ApiOperation(
@@ -52,6 +48,25 @@ class TeamController(peopleDao: PeopleDao, teamDao: TeamDao) {
 
     val team = teamDao.getTeam(teamId)
     new ResponseEntity(team.get.name, HttpStatus.OK)
+  }
+
+  @ApiOperation(
+    value = "Update your team name",
+    produces = "application/json"
+  )
+  @ApiResponses(value = Array(
+    new ApiResponse(code = 200, message = "OK")
+  ))
+  @RequestMapping(value = Array("/team/name/{teamName}"), method = Array(RequestMethod.PUT))
+  @Transactional
+  def setTeamName(@ApiIgnore @RequestHeader("user-id") userId: String,
+                  @PathVariable(name = "teamName", required = true) teamName: String): ResponseEntity[Any] = {
+    val teamId = peopleDao.loadPersonByUserId(userId)
+      .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${userId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
+
+    teamDao.updateTeamName(teamId, teamName)
+
+    new ResponseEntity(HttpStatus.OK)
   }
 
 }

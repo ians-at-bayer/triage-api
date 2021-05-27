@@ -26,7 +26,7 @@ class SlackConfigController(settingsDao: SettingsDao,
     new ApiResponse(code = 200, message = "OK"),
     new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Bad Request"),
   ))
-  @RequestMapping(value = Array("/slack-config"), method = Array(RequestMethod.POST))
+  @RequestMapping(value = Array("/slack-config"), method = Array(RequestMethod.PUT))
   @Transactional
   def setConfig(@ApiIgnore @RequestHeader("user-id") userId: String,
                 @ApiParam(value = "slackConfig") @RequestBody slackConfig: SlackConfigDTO

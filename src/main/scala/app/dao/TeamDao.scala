@@ -14,6 +14,9 @@ class TeamDao(template: ScalaJdbcTemplate) {
     ScalaJDBC.getIntKey(keyHolder, "id")
   }
 
+  def updateTeamName(teamId: Int, teamName: String) = template
+    .update("update teams set name = ? where id = ?", teamName, teamId)
+
   def getTeam(id: Int): Option[Team] = template.query[Team]("select * from teams where id = ?", new TeamsRowMapper, id).headOption
 
   def getAllTeamsIds: Seq[Int] = template.queryForSeq[Int]("select id from teams")

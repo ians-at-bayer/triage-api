@@ -35,7 +35,7 @@ class PeopleDao(template: ScalaJdbcTemplate) {
   def loadPersonByUserId(userId: String) : Option[Person] = {
     val sql = "select * from people where slack_id = ?"
 
-    template.queryForObject(sql, new PersonRowMapper, userId).headOption
+    template.queryForObject(sql, new PersonRowMapper, userId.toLowerCase).headOption
   }
 
   //
@@ -45,7 +45,7 @@ class PeopleDao(template: ScalaJdbcTemplate) {
     val sql = "insert into people (name, team_id, slack_id, order_number) " +
       "select ?, ?, ?, COALESCE(max(order_number)+1, 0) from people where team_id = ?"
 
-    template.update(sql, name, teamId, slackId, teamId)
+    template.update(sql, name, teamId, slackId.toLowerCase, teamId)
   }
 
   //
