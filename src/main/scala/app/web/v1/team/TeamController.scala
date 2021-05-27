@@ -69,4 +69,22 @@ class TeamController(peopleDao: PeopleDao, teamDao: TeamDao) {
     new ResponseEntity(HttpStatus.OK)
   }
 
+  @ApiOperation(
+    value = "Delete your team",
+    produces = "application/json"
+  )
+  @ApiResponses(value = Array(
+    new ApiResponse(code = 200, message = "OK")
+  ))
+  @RequestMapping(value = Array("/team"), method = Array(RequestMethod.DELETE))
+  @Transactional
+  def deleteTeam(@ApiIgnore @RequestHeader("user-id") userId: String): ResponseEntity[Any] = {
+    val teamId = peopleDao.loadPersonByUserId(userId)
+      .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${userId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
+
+    teamDao.deleteTeam(teamId)
+
+    new ResponseEntity(HttpStatus.OK)
+  }
+
 }

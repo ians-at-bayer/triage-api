@@ -21,4 +21,6 @@ class TeamDao(template: ScalaJdbcTemplate) {
 
   def getAllTeamsIds: Seq[Int] = template.queryForSeq[Int]("select id from teams")
 
+  def deleteTeam(teamId: Int): Int = template.update("delete from teams where id = ?", teamId)
+
 }

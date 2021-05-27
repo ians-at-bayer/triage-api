@@ -73,6 +73,7 @@ class SetupController(settingsDao: SettingsDao,
 
     //Notify slack
     val firstPerson = peopleDao.loadPersonByUserId(setup.people.head.slackId).get
+
     val slackSendResult = Try(slackNotifier.sendMessage(teamId, messageGenerator.generateMessage(firstPerson)))
 
     if (slackSendResult.isFailure || !slackSendResult.get) {
