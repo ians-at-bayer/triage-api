@@ -6,7 +6,7 @@
         "dbUrl": "jdbc:postgresql://localhost:15430/triage_rotations?currentSchema=triage_rotations_local&ssl=false",
         "dbUsername": "triagerotationsuser",
         "dbPassword": "triagerotationsuser",
-        "baseUrl": "http://localhost:8080/webapp"
+        "baseUrl": "http://localhost/support-triage-manager"
       }
     }
   ]
