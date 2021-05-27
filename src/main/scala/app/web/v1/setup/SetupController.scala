@@ -53,6 +53,8 @@ class SetupController(settingsDao: SettingsDao,
     //Create the team
     val teamId = teamDao.createTeam(setup.teamName)
 
+    Log.info(s"User ${userId} is attempting to create team ${setup.teamName} [assigned team id:$teamId]")
+
     //Save people
     setup.people.foreach(people => {
       if (peopleDao.loadPersonByUserId(people.slackId).isDefined) {
@@ -67,16 +69,19 @@ class SetupController(settingsDao: SettingsDao,
     settingsDao.create(Settings(setup.slackConfig.slackHookUrl, teamId, 0,setup.slackConfig.slackMessage,
       setup.rotationConfig.nextRotationTime, setup.rotationConfig.rotationFrequencyDays))
 
-    Log.info(s"User ${userId} created team ${setup.teamName} [$teamId]")
+
 
     //Notify slack
     val firstPerson = peopleDao.loadPersonByUserId(setup.people.head.slackId).get
     val slackSendResult = Try(slackNotifier.sendMessage(teamId, messageGenerator.generateMessage(firstPerson)))
 
     if (slackSendResult.isFailure || !slackSendResult.get) {
+      if (slackSendResult.isFailure) Log.error("Failed to send slack message", slackSendResult.failed.get)
       TransactionAspectSupport.currentTransactionStatus.setRollbackOnly() //rollback because we may have made db changes by now
       return new ResponseEntity(ErrorMessageDTO(s"Failed to send a Slack message using your hook. Please check the Slack hook URL and message, then try again."), HttpStatus.BAD_REQUEST)
     }
+
+    Log.info(s"Team '${setup.teamName}' created successfully")
 
     new ResponseEntity(SetupResponse(teamId), HttpStatus.CREATED)
   }

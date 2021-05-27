@@ -4,6 +4,7 @@ import app.business.{MessageGenerator, SlackNotifier}
 import app.dao.{PeopleDao, SettingsDao}
 import app.web.v1.ErrorMessageDTO
 import io.swagger.annotations.{Api, ApiOperation, ApiResponse, ApiResponses}
+import org.slf4j.{Logger, LoggerFactory}
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.interceptor.TransactionAspectSupport
@@ -20,6 +21,8 @@ class OnCallController(peopleDao: PeopleDao,
                        settingsDao: SettingsDao,
                        messageGenerator: MessageGenerator,
                        slackNotifier: SlackNotifier) {
+
+  private val Log: Logger = LoggerFactory.getLogger(this.getClass)
 
   @ApiOperation(
     value = "Set who is on call currently. Will notify Slack with the change.",
@@ -45,6 +48,8 @@ class OnCallController(peopleDao: PeopleDao,
 
     val slackSendResult = Try(slackNotifier.sendMessage(teamId, messageGenerator.generateMessage(person)))
     if (slackSendResult.isFailure || !slackSendResult.get) {
+      if (slackSendResult.isFailure) Log.error("Failed to send slack message", slackSendResult.failed.get)
+
       TransactionAspectSupport.currentTransactionStatus.setRollbackOnly()
       return new ResponseEntity(ErrorMessageDTO(s"Failed to send a Slack message. Please check your settings and try again later."), HttpStatus.BAD_REQUEST)
     }

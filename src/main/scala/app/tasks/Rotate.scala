@@ -17,19 +17,14 @@ class Rotate(slackNotifier: SlackNotifier,
 
   private val Log: Logger = LoggerFactory.getLogger(this.getClass)
 
-  //run every 30 seconds
-  @Scheduled(fixedRate = 30 * 1000, initialDelay = 1000)
+  //run every 15 seconds
+  @Scheduled(fixedRate = 15 * 1000, initialDelay = 1000)
   def doRotation(): Unit = {
 
     teamDao.getAllTeamsIds.foreach(teamId => {
       txFunction {
 
-        Log.info("Checking if I should rotate")
-
-        if (!peopleDao.peopleExist(teamId)) {
-          Log.info("Done: not enough people to rotate")
-          return
-        }
+        Log.info(s"Checking rotation for team [$teamId]")
 
         //is current time >= rotate time
         if (!settingsDao.shouldRotate(teamId)) {
