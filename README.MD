@@ -10,7 +10,7 @@ Simple Scala web application for managing support triage rotations between team 
 
 ### Deploy to Cloud Foundry
 1. Create an encrypted Postgres RDS database accessible from Cloud Foundry
-1. Run `06-tables.sql` SQL files in `database/docker-entrypoint-initdb.d` to setup the new db
+1. Create the configured schema in the Config.json file and run `06-tables.sql` SQL files in `database/docker-entrypoint-initdb.d` to setup the new db
 1. Copy the *.pem file for accessing the encrypted RDS instance and put it in the webapp directory, name it `rds-combined-ca-bundle.pem`    
 1. Configure the CF instance to use the new Postgres database by setting properties in `user-deploy/Database.json`, 
    see example file `user-deploy/DatabaseExample.json`
@@ -19,15 +19,9 @@ Simple Scala web application for managing support triage rotations between team 
 1. `./services.sh` Setup cloud foundry services
 1. Go to project root dir
 1. Run `sbt clean package`
-1. `cf-deploy --env=[d/t/p]` Run the deployment script
+1. `cf-deploy` Run the deployment script
 1. Setup Ocelot and/or Akana with route provided by CF
 
 
 ### Future Development Plans
 * Microsoft Teams support
-* Frontend:
-   * Contact cards have a different security policy than Swagger endpoints
-   * Users can join a team on the web app
-   * Users can manage settings on the web app
-   * Users can find people on support by application name
-      * Users can get support person's contact info

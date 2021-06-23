@@ -68,7 +68,7 @@ class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao, peopleBus
     if (peopleUpdate.length < 2)
       return new ResponseEntity(ErrorMessageDTO("There must be at least two people for a team"), HttpStatus.BAD_REQUEST)
 
-    if (peopleUpdate.length > 6)
+    if (peopleUpdate.length > 15)
       return new ResponseEntity(ErrorMessageDTO("There cannot be more than six people on a team"), HttpStatus.BAD_REQUEST)
 
     val updatesHavePersonOnSupport = peopleUpdate.find(person => personOnSupport.slackId == person.slackId).isDefined
