@@ -61,7 +61,7 @@ class SettingsDao(template: ScalaJdbcTemplate, teamDao: TeamDao) {
   }
 
   private def rotateOrderPointer(teamId: Int) : Int = template.update(
-    "update settings set order_pointer = (select mod(order_pointer+1, max(order_number)+1) from people where team_id = ?)", teamId)
+    "update settings set order_pointer = (select mod(order_pointer+1, max(order_number)+1) from people where team_id = ?) where team_id = ?", teamId, teamId)
 
   private def progressRotationTimestamp(teamId: Int): Int = template.update(
     "update settings set next_rotation = (next_rotation + (rotation_frequency_days || 'days')::interval) where team_id = ?", teamId)

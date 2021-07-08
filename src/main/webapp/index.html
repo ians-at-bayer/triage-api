@@ -13,7 +13,7 @@
     <script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
 
     <script type="text/javascript" defer>
-        $.getJSON("api/v1/version").done(function (data) {
+        $.getJSON("support-triage-manager-api/v1/version").done(function (data) {
             $("#version").html(data.version);
             $("#build-date").html(data.buildTime);
             $("#vcs-hash").html(data.buildHash);
@@ -48,7 +48,7 @@
 
 <br/>
 <br/>
-<a href="api/swagger-ui.html">API Documentation</a>
+<a href="support-triage-manager-api/swagger-ui.html">API Documentation</a>
 
 </body>
 </html>
