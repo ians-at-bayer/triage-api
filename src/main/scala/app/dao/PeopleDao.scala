@@ -75,10 +75,10 @@ class PeopleDao(template: ScalaJdbcTemplate) {
       .getOrElse(throw new IllegalArgumentException(s"Person with ID $id does not exist"))
 
     val sql1 = "delete from people where id = ?"
-    val sql2 = "update people set order_number = order_number - 1 where order_number > ?"
+    val sql2 = "update people set order_number = order_number - 1 where order_number > ? and team_id = ?"
 
     template.update(sql1, id)
-    template.update(sql2, person.order)
+    template.update(sql2, person.order, teamId)
   }
 
 }
