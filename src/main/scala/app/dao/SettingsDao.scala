@@ -21,10 +21,10 @@ class SettingsDao(template: ScalaJdbcTemplate, teamDao: TeamDao) {
   }
 
   def create(settings: Settings): Unit = {
-    val sql = "insert into settings (team_id, slack_hook_url, order_pointer, next_rotation, rotation_frequency_days, slack_message) values (?,?,?,?,?,?)"
+    val sql = "insert into settings (team_id, hook_url, order_pointer, next_rotation, rotation_frequency_days, message) values (?,?,?,?,?,?)"
 
-    template.update(sql, settings.teamId, settings.slackHookUrl, settings.orderPointer, new Timestamp(settings.nextRotation.toEpochMilli),
-      settings.rotationFrequency, settings.slackMessage)
+    template.update(sql, settings.teamId, settings.hookUrl, settings.orderPointer, new Timestamp(settings.nextRotation.toEpochMilli),
+      settings.rotationFrequency, settings.hookMessage)
   }
 
   def settings(teamId: Int) : Option[Settings] = template.queryForObject(
@@ -36,14 +36,14 @@ class SettingsDao(template: ScalaJdbcTemplate, teamDao: TeamDao) {
     template.update(sql, orderNumber, teamId)
   }
 
-  def setSlackMessage(teamId: Int, message: String): Unit = {
-    val sql = "update settings set slack_message = ? where team_id = ?"
+  def setMessage(teamId: Int, message: String): Unit = {
+    val sql = "update settings set message = ? where team_id = ?"
 
     template.update(sql, message, teamId)
   }
 
-  def setSlackHookURL(teamId: Int, url: String): Unit = {
-    val sql = "update settings set slack_hook_url = ? where team_id = ?"
+  def setHookURL(teamId: Int, url: String): Unit = {
+    val sql = "update settings set hook_url = ? where team_id = ?"
 
     template.update(sql, url, teamId)
   }

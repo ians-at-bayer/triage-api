@@ -1,3 +1,3 @@
 package app.web.v1.setup
 
-case class PersonSetupDTO(name: String, slackId: String)
+case class PersonSetupDTO(name: String, userId: String)

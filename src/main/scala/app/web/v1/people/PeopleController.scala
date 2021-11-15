@@ -2,7 +2,7 @@ package app.web.v1.people
 
 import app.dao.{PeopleDao, SettingsDao}
 import app.web.v1.ErrorMessageDTO
-import app.web.v1.slack.SlackConfigDTO
+import app.web.v1.msteams.TeamsConfigDTO
 import io.swagger.annotations.{Api, ApiOperation, ApiParam, ApiResponse, ApiResponses}
 
 import javax.servlet.http.HttpServletRequest
@@ -61,9 +61,9 @@ class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao, peopleBus
     val pointerNumber = settingsDao.settings(teamId).get.orderPointer
     val personOnSupport = peopleDao.loadPersonByOrder(teamId, pointerNumber).get
 
-    val slackIdsUnique = peopleUpdate.map(_.slackId).distinct.length == peopleUpdate.length
-    if (!slackIdsUnique)
-      return new ResponseEntity(ErrorMessageDTO("All Slack IDs must be unique"), HttpStatus.BAD_REQUEST)
+    val userIdsUnique = peopleUpdate.map(_.userId).distinct.length == peopleUpdate.length
+    if (!userIdsUnique)
+      return new ResponseEntity(ErrorMessageDTO("All user IDs must be unique"), HttpStatus.BAD_REQUEST)
 
     if (peopleUpdate.length < 2)
       return new ResponseEntity(ErrorMessageDTO("There must be at least two people for a team"), HttpStatus.BAD_REQUEST)
@@ -71,16 +71,16 @@ class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao, peopleBus
     if (peopleUpdate.length > 15)
       return new ResponseEntity(ErrorMessageDTO("There cannot be more than six people on a team"), HttpStatus.BAD_REQUEST)
 
-    val updatesHavePersonOnSupport = peopleUpdate.find(person => personOnSupport.slackId == person.slackId).isDefined
+    val updatesHavePersonOnSupport = peopleUpdate.find(person => personOnSupport.userId == person.userId).isDefined
     if (!updatesHavePersonOnSupport)
       return new ResponseEntity(ErrorMessageDTO(s"The person on support cannot be removed from the team"), HttpStatus.BAD_REQUEST)
 
     //Delete all team members and create the new ones
     peopleDao.loadAllPeopleOrdered(teamId).map(person => peopleDao.removePerson(teamId, person.id))
-    peopleUpdate.map(person => peopleDao.insertPerson(person.name, person.slackId, teamId))
+    peopleUpdate.map(person => peopleDao.insertPerson(person.name, person.userId, teamId))
 
     //Update the pointer to point to the person who is on support - may be in a different position in the order
-    val personOnSupportNew = peopleDao.loadPersonByUserId(personOnSupport.slackId).get
+    val personOnSupportNew = peopleDao.loadPersonByUserId(personOnSupport.userId).get
     settingsDao.setPointer(teamId, personOnSupportNew.order)
 
     new ResponseEntity(HttpStatus.OK)

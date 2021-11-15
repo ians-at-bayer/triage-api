@@ -1,6 +1,6 @@
 package app.web.v1.people
 
-import app.business.{MessageGenerator, SlackNotifier}
+import app.business.{MessageGenerator, Notifier}
 import app.dao.{PeopleDao, SettingsDao, TeamDao}
 import app.web.v1.ErrorMessageDTO
 import io.swagger.annotations.{Api, ApiOperation, ApiResponse, ApiResponses}
@@ -20,13 +20,13 @@ import scala.util.Try
 class OnCallController(peopleDao: PeopleDao,
                        settingsDao: SettingsDao,
                        messageGenerator: MessageGenerator,
-                       slackNotifier: SlackNotifier,
+                       notifier: Notifier,
                        teamDao: TeamDao) {
 
   private val Log: Logger = LoggerFactory.getLogger(this.getClass)
 
   @ApiOperation(
-    value = "Set who is on call currently. Will notify Slack with the change.",
+    value = "Set who is on call currently. Will notify teams with the change.",
     produces = "application/json"
   )
   @ApiResponses(value = Array(
@@ -34,25 +34,25 @@ class OnCallController(peopleDao: PeopleDao,
     new ApiResponse(code = 400, response = classOf[ErrorMessageDTO], message = "Bad Request"),
     new ApiResponse(code = 404, response = classOf[ErrorMessageDTO], message = "Not Found")
   ))
-  @RequestMapping(value = Array("/on-call/{slackId}"), method = Array(RequestMethod.PUT))
+  @RequestMapping(value = Array("/on-call/{userId}"), method = Array(RequestMethod.PUT))
   @Transactional
-  def setOnCallPerson(@ApiIgnore @RequestHeader("user-id") userId: String,
-                       @PathVariable(name = "slackId", required = true) slackId: String): ResponseEntity[Any]  = {
+  def setOnCallPerson(@ApiIgnore @RequestHeader("user-id") actionUserId: String,
+                      @PathVariable(name = "userId", required = true) onCallUserId: String): ResponseEntity[Any]  = {
 
-    val teamId = peopleDao.loadPersonByUserId(userId)
-      .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${userId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
+    val teamId = peopleDao.loadPersonByUserId(actionUserId)
+      .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"User ${actionUserId} has no team assigned"), HttpStatus.BAD_REQUEST)).teamId
 
-    val person = peopleDao.loadAllPeopleOrdered(teamId).find(_.slackId == slackId)
+    val person = peopleDao.loadAllPeopleOrdered(teamId).find(_.userId == onCallUserId)
       .getOrElse(return new ResponseEntity(ErrorMessageDTO(s"Person not found"), HttpStatus.NOT_FOUND))
 
     settingsDao.setPointer(person.teamId, person.order)
 
-    val slackSendResult = Try(slackNotifier.sendMessage(teamId, messageGenerator.generateMessage(person)))
-    if (slackSendResult.isFailure || !slackSendResult.get) {
-      if (slackSendResult.isFailure) Log.error("Failed to send slack message", slackSendResult.failed.get)
+    val teamsSendResult = Try(notifier.sendMessage(teamId, messageGenerator.generateMessage(person)))
+    if (teamsSendResult.isFailure || !teamsSendResult.get) {
+      if (teamsSendResult.isFailure) Log.error("Failed to send teams message", teamsSendResult.failed.get)
 
       TransactionAspectSupport.currentTransactionStatus.setRollbackOnly()
-      return new ResponseEntity(ErrorMessageDTO(s"Failed to send a Slack message. Please check your settings and try again later."), HttpStatus.BAD_REQUEST)
+      return new ResponseEntity(ErrorMessageDTO(s"Failed to send a Teams message. Please check your settings and try again later."), HttpStatus.BAD_REQUEST)
     }
 
     new ResponseEntity(HttpStatus.OK)
@@ -99,7 +99,7 @@ class OnCallController(peopleDao: PeopleDao,
 
     val personOnCall = peopleDao.loadPersonByOrder(teamSettings.teamId, teamSettings.orderPointer).get
 
-    new ResponseEntity(TeamMemberOnCall(personOnCall.name, team.name, personOnCall.slackId, teamSettings.nextRotation), HttpStatus.OK)
+    new ResponseEntity(TeamMemberOnCall(personOnCall.name, team.name, personOnCall.userId, teamSettings.nextRotation), HttpStatus.OK)
   }
 
 }

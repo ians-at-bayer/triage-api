@@ -10,7 +10,7 @@ class PersonRowMapper extends RowMapper[Person] {
       rs.getInt("id"),
       rs.getInt("team_id"),
       rs.getString("name"),
-      rs.getString("slack_id"),
+      rs.getString("user_id"),
       rs.getInt("order_number")
     )
   }

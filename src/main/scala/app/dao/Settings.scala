@@ -2,9 +2,9 @@ package app.dao
 
 import java.time.Instant
 
-case class Settings (slackHookUrl: String,
+case class Settings (hookUrl: String,
                      teamId: Int,
                      orderPointer: Int,
-                     slackMessage: String,
+                     hookMessage: String,
                      nextRotation: Instant,
                      rotationFrequency: Int)

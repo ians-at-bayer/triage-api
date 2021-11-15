@@ -1,6 +1,6 @@
 package app.tasks
 
-import app.business.{MessageGenerator, SlackNotifier}
+import app.business.{MessageGenerator, Notifier}
 import app.dao.{PeopleDao, SettingsDao, TeamDao}
 import com.bayer.scala.transactions.TransactionalFunction
 import org.slf4j.{Logger, LoggerFactory}
@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
 @Component
-class Rotate(slackNotifier: SlackNotifier,
+class Rotate(notifier: Notifier,
              settingsDao: SettingsDao,
              peopleDao: PeopleDao,
              txFunction: TransactionalFunction,
@@ -41,7 +41,7 @@ class Rotate(slackNotifier: SlackNotifier,
         val person = peopleDao.loadPersonByOrder(teamId, orderPointer).get
         val message = messageGenerator.generateMessage(person)
 
-        slackNotifier.sendMessage(teamId, message)
+        notifier.sendMessage(teamId, message)
 
         Log.info(s"Done")
 

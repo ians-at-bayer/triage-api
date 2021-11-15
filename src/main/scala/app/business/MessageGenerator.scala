@@ -14,8 +14,7 @@ class MessageGenerator(settingsDao: SettingsDao,
   def generateMessage(personOnSupport: Person): String = {
     val settings = settingsDao.settings(personOnSupport.teamId).get
 
-    val message = settings.slackMessage
-      .replaceAll("""\[slackid\]""", s"<@${personOnSupport.slackId}>")
+    val message = settings.hookMessage
       .replaceAll("""\[name\]""", personOnSupport.name)
       .replaceAll("""\[cardurl\]""", appProperties.baseUrl + s"/on-call/${personOnSupport.teamId}")
 
