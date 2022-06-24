@@ -2,17 +2,12 @@ package app.web.v1.people
 
 import app.dao.{PeopleDao, SettingsDao}
 import app.web.v1.ErrorMessageDTO
-import app.web.v1.msteams.TeamsConfigDTO
-import io.swagger.annotations.{Api, ApiOperation, ApiParam, ApiResponse, ApiResponses}
-
-import javax.servlet.http.HttpServletRequest
+import io.swagger.annotations._
 import org.slf4j.LoggerFactory
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.bind.annotation.{CrossOrigin, PathVariable, RequestBody, RequestHeader, RequestMapping, RequestMethod, ResponseStatus, RestController}
+import org.springframework.web.bind.annotation._
 import springfox.documentation.annotations.ApiIgnore
-
-import scala.util.Try
 
 @CrossOrigin
 @RestController
@@ -69,15 +64,21 @@ class PeopleController(peopleDao: PeopleDao, settingsDao: SettingsDao, peopleBus
       return new ResponseEntity(ErrorMessageDTO("There must be at least two people for a team"), HttpStatus.BAD_REQUEST)
 
     if (peopleUpdate.length > 15)
-      return new ResponseEntity(ErrorMessageDTO("There cannot be more than six people on a team"), HttpStatus.BAD_REQUEST)
+      return new ResponseEntity(ErrorMessageDTO("There cannot be more than 15 people on a team"), HttpStatus.BAD_REQUEST)
 
-    val updatesHavePersonOnSupport = peopleUpdate.find(person => personOnSupport.userId == person.userId).isDefined
+    val updatesHavePersonOnSupport = peopleUpdate.exists(person => personOnSupport.userId == person.userId)
     if (!updatesHavePersonOnSupport)
       return new ResponseEntity(ErrorMessageDTO(s"The person on support cannot be removed from the team"), HttpStatus.BAD_REQUEST)
 
+    if (!peopleUpdate.forall(_.userId.trim.nonEmpty))
+      return new ResponseEntity(ErrorMessageDTO(s"User ID cannot be empty"), HttpStatus.BAD_REQUEST)
+
+    if (!peopleUpdate.forall(_.name.trim.nonEmpty))
+      return new ResponseEntity(ErrorMessageDTO(s"User name cannot be empty"), HttpStatus.BAD_REQUEST)
+
     //Delete all team members and create the new ones
-    peopleDao.loadAllPeopleOrdered(teamId).map(person => peopleDao.removePerson(teamId, person.id))
-    peopleUpdate.map(person => peopleDao.insertPerson(person.name, person.userId, teamId))
+    peopleDao.loadAllPeopleOrdered(teamId).foreach(person => peopleDao.removePerson(teamId, person.id))
+    peopleUpdate.foreach(person => peopleDao.insertPerson(person.name, person.userId, teamId))
 
     //Update the pointer to point to the person who is on support - may be in a different position in the order
     val personOnSupportNew = peopleDao.loadPersonByUserId(personOnSupport.userId).get

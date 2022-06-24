@@ -40,8 +40,21 @@ class SetupController(settingsDao: SettingsDao,
             @ApiParam(value = "setup") @RequestBody setup: SetupDTO): ResponseEntity[Any]  = {
 
     //Validate
+    val userIdsUnique = setup.people.map(_.userId).distinct.length == setup.people.length
+    if (!userIdsUnique)
+      return new ResponseEntity(ErrorMessageDTO("All user IDs must be unique"), HttpStatus.BAD_REQUEST)
+
     if (setup.people.length < 2)
-      return new ResponseEntity(ErrorMessageDTO("There must be at least two people for rotations to occur"), HttpStatus.BAD_REQUEST)
+      return new ResponseEntity(ErrorMessageDTO("There must be at least two people for a team"), HttpStatus.BAD_REQUEST)
+
+    if (setup.people.length > 15)
+      return new ResponseEntity(ErrorMessageDTO("There cannot be more than 15 people on a team"), HttpStatus.BAD_REQUEST)
+
+    if (!setup.people.forall(_.userId.trim.nonEmpty))
+      return new ResponseEntity(ErrorMessageDTO(s"User ID cannot be empty"), HttpStatus.BAD_REQUEST)
+
+    if (!setup.people.forall(_.name.trim.nonEmpty))
+      return new ResponseEntity(ErrorMessageDTO(s"User name cannot be empty"), HttpStatus.BAD_REQUEST)
 
     if (setup.people.find(p => p.userId.toLowerCase == userId.toLowerCase).isEmpty)
       return new ResponseEntity(ErrorMessageDTO("You must be on the team you are creating"), HttpStatus.BAD_REQUEST)

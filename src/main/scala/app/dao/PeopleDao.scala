@@ -70,6 +70,12 @@ class PeopleDao(template: ScalaJdbcTemplate) {
   //
   // DELETE
   //
+
+  /**
+   * Remove a person from the team
+   *
+   * NOTE: Will not update the order pointer after someone is removed. This must be done elsewhere.
+   */
   def removePerson(teamId: Int, id: Int): Unit = {
     val person = loadPerson(teamId, id)
       .getOrElse(throw new IllegalArgumentException(s"Person with ID $id does not exist"))
