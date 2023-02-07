@@ -24,6 +24,7 @@ class WebServletConfiguration extends WebApplicationInitializer {
     //
     val servlet = ctx.addServlet("dispatcher", new DispatcherServlet(webCtx))
     servlet.addMapping("/support-triage-manager-api/*")
+    servlet.addMapping("/triton-strm/*")
     servlet.setLoadOnStartup(1)
 
   }

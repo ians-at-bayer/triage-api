@@ -21,7 +21,3 @@ Simple Scala web application for managing support triage rotations between team 
 1. Run `sbt clean package`
 1. `cf-deploy` Run the deployment script
 1. Setup Ocelot and/or Akana with route provided by CF
-
-
-### Future Development Plans
-* Microsoft Teams support
