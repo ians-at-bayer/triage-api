@@ -1,0 +1,21 @@
+services:
+  setup:
+    build: local-init
+    depends_on:
+      - api
+  api:
+    build:
+      context: .
+      args:
+        DB_URL: "jdbc:postgresql://postgres:5432/triage_rotations?currentSchema=triage_rotations_local&ssl=false"
+        DB_USER: "triagerotationsuser"
+        DB_PASS: "triagerotationsuser"
+        BASE_URL: "http://localhost/support-triage-manager"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+  postgres:
+    build: ./database
+    ports:
+      - "15430:5432"

@@ -1,16 +1,9 @@
 package app.config
 
-import com.monsanto.mbl.properties.CloudPropertyLoader
 import org.springframework.stereotype.Component
 
 @Component
 class AppProperties {
-
-  //
-  // Get initial config from VCAP_SERVICES, if defined, else from local json file.
-  //
-  private val cf = new CloudPropertyLoader(Some("./local-bindings.json"), None)
-  private val props = cf.props
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //
@@ -19,15 +12,15 @@ class AppProperties {
   //
   // Database
   //
-  def databaseUsername: String = props("config.dbUsername")
+  def databaseUsername: String = System.getProperty("tr.db.user")
 
-  def databasePassword: String = props("config.dbPassword")
+  def databasePassword: String = System.getProperty("tr.db.pass")
 
-  def databaseUrl: String = props("config.dbUrl")
+  def databaseUrl: String = System.getProperty("tr.db.url")
 
   //
   // Base URL
   //
-  def baseUrl: String = props("config.baseUrl")
+  def baseUrl: String = System.getProperty("tr.base.url")
 
 }

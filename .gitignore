@@ -1,6 +1,6 @@
 target
 .idea
 project
-setup.json
-user-deploy/Config.json
+local-init/setup.json
+Config.json
 src/main/webapp/rds-combined-ca-bundle.pem

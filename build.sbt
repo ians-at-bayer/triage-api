@@ -2,7 +2,7 @@ import java.util.Date
 
 name := "support-triage-rotations-manager"
 version := "0.1"
-scalaVersion := "2.12.10"
+scalaVersion := "2.13.9"
 
 val springVersion = "5.2.7.RELEASE"
 val logbackVersion = "1.2.3"
@@ -20,9 +20,14 @@ artifactName := { (_: ScalaVersion, _: ModuleID, a: Artifact) =>
 packageOptions in(Compile, packageBin) += Package.ManifestAttributes("Build-Date" -> new Date().toString)
 packageOptions in(Compile, packageBin) += Package.ManifestAttributes("Vcs-Release-Hash" -> new sbtrelease.Git(new File(".")).currentHash)
 
+(sys.env.get("artifactory_username"), sys.env.get("artifactory_password")) match {
+  case (Some(username), Some(password)) => credentials += Credentials("Artifactory Realm", "artifactory.bayer.com", username, password)
+  case _ => credentials += Credentials(Path.userHome / ".sbt" / ".credentials-artifactory")
+}
+
 externalResolvers := Seq(
-  // Set AWS company nexus as only source of dependencies.
-  "Nexus Repository" at "https://nexus.platforms.engineering/repository/tps"
+  "Bayer Artifactory Repository" at "https://artifactory.bayer.com/artifactory/shared-mvn-prod-shared",
+  DefaultMavenRepository
 )
 
 libraryDependencies ++= Seq(
@@ -37,12 +42,12 @@ libraryDependencies ++= Seq(
   // DB
   "org.apache.commons" % "commons-dbcp2" % "2.7.0",
   "org.postgresql" % "postgresql" % "42.2.14",
-  "com.bayer.scala-spring-jdbc" %% "scala-spring-jdbc" % "1.2.8",
-  "com.bayer.scala-spring-jdbc" %% "scala-spring-jdbc" % "1.2.8",
+  "com.bayer.scala-spring-jdbc" %% "scala-spring-jdbc" % "2.4.2",
+  "com.bayer.scala-spring-jdbc" %% "scala-spring-jdbc" % "2.4.2",
 
   // HTTP
-  "com.bayer.scala-apache-httpclient" %% "httpclient" % "1.1.2",
-  "com.monsanto.mbl.oauth" %% "oauth-client-httpcomponents" % "1.2.1",
+  "com.bayer.scala-apache-httpclient" %% "httpclient" % "1.1.5",
+  "com.bayer.scala-oauth" %% "oauth-client-httpcomponents" % "2.3.5",
 
   // SERVLET
   "javax.servlet" % "javax.servlet-api" % servletApiVersion % "provided",
@@ -65,9 +70,6 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.dataformat" % "jackson-dataformat-csv" % jacksonVersion,
   "com.fasterxml.jackson.module" % "jackson-module-paranamer" % jacksonVersion,
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
-
-  //Cloud Properties
-  "com.monsanto.mbl.properties" %% "cloud-properties" % springCloudPropsVersion,
 )
 
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
