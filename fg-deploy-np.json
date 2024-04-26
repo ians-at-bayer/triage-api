@@ -1,0 +1,32 @@
+{
+  "buildOnly": false,
+  "name": "triage-api",
+  "fargateParameters": {
+    "cpu": "1024",
+    "memory": "2GB",
+    "instanceCount": 1,
+    "healthCheckPath": "/v1/version",
+    "healthCheckGracePeriod": 240,
+    "taskRoleName": "ecsTaskExecutionRole",
+    "environmentVars": {
+      "DB_URL": "jdbc:postgresql://support-triage-manager.cq9fm6y6z3qg.us-east-1.rds.amazonaws.com:5432/triage_rotations_np?currentSchema=support_triage_rotations&ssl=true",
+      "DB_USER": "triagerotations",
+      "DB_PASS": "",
+      "BASE_URL": "https://velocity-np.ag/support-triage-manager"
+    },
+    "port": 8080,
+    "timeoutInSeconds": 600
+  },
+  "docker": {
+    "file": "Dockerfile"
+  },
+  "aws": {
+    "accountId": "262928956091",
+    "fargateStackName": "SC-262928956091-pp-qpztbexrzms3u",
+    "region": "us-east-1",
+    "tags":{
+      "mon:regulated": "no",
+      "mon:data-classification": "internal"
+    }
+  }
+}
