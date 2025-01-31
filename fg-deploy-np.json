@@ -2,8 +2,8 @@
   "buildOnly": false,
   "name": "triage-api",
   "fargateParameters": {
-    "cpu": "1024",
-    "memory": "2GB",
+    "cpu": "256",
+    "memory": "0.5GB",
     "instanceCount": 1,
     "healthCheckPath": "/v1/version",
     "healthCheckGracePeriod": 240,
