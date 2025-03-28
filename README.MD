@@ -15,6 +15,6 @@ Simple Scala web application for managing support triage rotations between team 
 
 ### Deploy
 ```shell
-  sbt clean webappPrepare
-  fg-deploy -m fg-deploy-np.json
+sbt clean webappPrepare
+DOCKER_DEFAULT_PLATFORM=linux/amd64 fg-deploy -m fg-deploy-np.json
 ```
