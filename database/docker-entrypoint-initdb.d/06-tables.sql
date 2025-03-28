@@ -24,7 +24,8 @@ create table settings (
 	order_pointer               int             not null,
 	next_rotation               timestamp       not null,
 	rotation_frequency_days     int             not null,
-	message                     varchar(9999)   not null
+	message                     varchar(9999)   not null,
+    chatbot_id                  varchar(9999)
 );
 
 

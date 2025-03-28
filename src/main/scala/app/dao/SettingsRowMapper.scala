@@ -1,7 +1,8 @@
 package app.dao
 
-import java.sql.ResultSet
+import com.bayer.scala.jdbc.ScalaJDBC
 
+import java.sql.ResultSet
 import org.springframework.jdbc.core.RowMapper
 
 class SettingsRowMapper extends RowMapper[Settings] {
@@ -12,7 +13,8 @@ class SettingsRowMapper extends RowMapper[Settings] {
       rs.getInt("order_pointer"),
       rs.getString("message"),
       rs.getTimestamp("next_rotation").toInstant,
-      rs.getInt("rotation_frequency_days")
+      rs.getInt("rotation_frequency_days"),
+      ScalaJDBC.getOptionString(rs, "chatbot_id")
     )
   }
 }

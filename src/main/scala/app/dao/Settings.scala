@@ -7,4 +7,5 @@ case class Settings (hookUrl: String,
                      orderPointer: Int,
                      hookMessage: String,
                      nextRotation: Instant,
-                     rotationFrequency: Int)
+                     rotationFrequency: Int,
+                     chatbotId: Option[String] = None)

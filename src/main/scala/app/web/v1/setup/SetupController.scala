@@ -120,7 +120,7 @@ class SetupController(settingsDao: SettingsDao,
     val teamsDTO = TeamsSetupDTO(settings.hookUrl, settings.hookMessage)
     val peopleDTOs = peopleDao.loadAllPeopleOrdered(teamId).map(person => PersonSetupDTO(person.name, person.userId))
 
-    new ResponseEntity(SetupDTO(team.name, rotationDTO, teamsDTO, peopleDTOs.toArray), HttpStatus.OK)
+    new ResponseEntity(SetupDTO(team.name, rotationDTO, teamsDTO, peopleDTOs.toArray, settings.chatbotId), HttpStatus.OK)
   }
 
 }

@@ -60,6 +60,12 @@ class SettingsDao(template: ScalaJdbcTemplate, teamDao: TeamDao) {
     template.update(sql, new Timestamp(instant.toEpochMilli), teamId)
   }
 
+  def setChatbotId(teamId: Int, chatbotId: Option[String]): Unit = {
+    val sql = "update settings set chatbot_id = ? where team_id = ?"
+
+    template.update(sql, chatbotId.orNull, teamId)
+  }
+
   private def rotateOrderPointer(teamId: Int) : Int = template.update(
     "update settings set order_pointer = (select mod(order_pointer+1, max(order_number)+1) from people where team_id = ?) where team_id = ?", teamId, teamId)
 

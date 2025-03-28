@@ -7,7 +7,7 @@ services:
     build:
       context: .
       args:
-        DB_URL: "jdbc:postgresql://postgres:5432/triage_rotations?currentSchema=triage_rotations_local&ssl=false"
+        DB_URL: "jdbc:postgresql://postgres:15430/triage_rotations?currentSchema=triage_rotations_local&ssl=false"
         DB_USER: "triagerotationsuser"
         DB_PASS: "triagerotationsuser"
         BASE_URL: "http://localhost/support-triage-manager"
