@@ -99,7 +99,7 @@ class OnCallController(peopleDao: PeopleDao,
 
     val personOnCall = peopleDao.loadPersonByOrder(teamSettings.teamId, teamSettings.orderPointer).get
 
-    new ResponseEntity(TeamMemberOnCall(personOnCall.name, team.name, personOnCall.userId, teamSettings.nextRotation), HttpStatus.OK)
+    new ResponseEntity(TeamMemberOnCall(personOnCall.name, team.name, personOnCall.userId, teamSettings.nextRotation, teamSettings.chatbotId), HttpStatus.OK)
   }
 
 }
